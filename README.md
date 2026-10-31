@@ -121,17 +121,19 @@
 
 ## 构建
 
-环境：JDK 17、Gradle 8.9、Android SDK 34（build-tools 34）。
+环境：JDK 17、Android SDK 34（build-tools 34）。Gradle 由仓库自带的 wrapper 提供（8.9），不需要单独安装。
 
 ```bash
 git clone https://github.com/Jkcode8/jktv.git
 cd jktv
-./gradlew :app:assembleDebug
+./gradlew :app:assembleDebug      # Windows: gradlew.bat :app:assembleDebug
 ```
 
-产物在 `app/build/outputs/apk/debug/`。
+产物在 `app/build/outputs/apk/debug/app-debug.apk`。
 
-> `settings.gradle` 里保留了一份阿里云 Maven 镜像，是为了在国内网络下能拉到依赖。如果不需要，删掉那几行 `maven { url 'https://maven.aliyun.com/...' }` 即可。
+> 首次构建会下载 Gradle 8.9（约 130 MB）和全部依赖。国内网络如果卡在 Gradle 下载这一步，把 `gradle/wrapper/gradle-wrapper.properties` 里的 `distributionUrl` 换成 `https\://mirrors.cloud.tencent.com/gradle/gradle-8.9-bin.zip` 即可。
+>
+> `settings.gradle` 里已经预置了阿里云 Maven 镜像，专门为了国内网络拉依赖。不需要的话删掉那几行 `maven { url 'https://maven.aliyun.com/...' }`。
 
 ---
 
