@@ -39,8 +39,8 @@ adb -s <序列号> shell settings get secure default_input_method
 ```
 
 - 网络调试的配对/端口按该固件提示操作；不是所有设备都用 5555。授权提示必须由设备拥有者确认。ADB 只用于安装和诊断，系统键盘语音及配对后的对话运行不依赖 ADB。
-- 已安装时检查 `dumpsys package io.github.op7418.guizangtv` 和本地 APK 签名；私人包 `com.gathin.tvhome` 是另一个应用。不要为了覆盖安装而自动卸载旧包；必要时保留旧版，用独立包名试用。
-- 从普通应用入口试用。不要先改默认桌面、禁用系统包或设置开机目标。ADB 启动公开版：`adb -s <序列号> shell am start -n io.github.op7418.guizangtv/.FrameHomeActivity`。
+- 已安装时检查 `dumpsys package com.jktv.launcher` 和本地 APK 签名；私人包 `com.gathin.tvhome` 是另一个应用。不要为了覆盖安装而自动卸载旧包；必要时保留旧版，用独立包名试用。
+- 从普通应用入口试用。不要先改默认桌面、禁用系统包或设置开机目标。ADB 启动公开版：`adb -s <序列号> shell am start -n com.jktv.launcher/.FrameHomeActivity`。
 - 检查列表和 Dock 的上下左右、确认、返回及设置入口。应用包名按本机查询结果配置；名称“PS5”并不代表识别到了设备。
 - 其他品牌的系统设置优先标准 Android Intent。信号源、开机、待机分开验证，并记录组件和失败回退；不要放宽 `XiaomiControls` 的机型判断来伪造兼容。
 

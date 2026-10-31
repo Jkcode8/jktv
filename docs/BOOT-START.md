@@ -27,7 +27,7 @@ v0.2.0 新增。**默认关闭，需要应用内开关和一次电脑配置同�
 
 安装 [v0.3.0 APK](https://github.com/op7418/guizang-tv/releases/tag/v0.3.0)，从电视应用列表打开“归藏电视”。不要给 v0.1.1 或更早版本配置这个启动目标，它们没有防止重复进入的判断入口。
 
-私人试用版“简洁桌面”和公开版“归藏电视”是不同应用。本文命令只针对公开版 `io.github.op7418.guizangtv`，不会迁移私人版的偏好。
+私人试用版“简洁桌面”和公开版“归藏电视”是不同应用。本文命令只针对公开版 `com.jktv.launcher`，不会迁移私人版的偏好。
 
 ### 2. 核对机型并保存原设置
 
@@ -47,11 +47,11 @@ adb -s TV_IP:PORT shell settings get system boot_auto_play
 确认新版已安装，并且你希望这台电视开机进入归藏电视后执行：
 
 ```sh
-adb -s TV_IP:PORT shell settings put system start_3rd_app io.github.op7418.guizangtv
+adb -s TV_IP:PORT shell settings put system start_3rd_app com.jktv.launcher
 adb -s TV_IP:PORT shell settings get system start_3rd_app
 ```
 
-第二条命令应返回 `io.github.op7418.guizangtv`。
+第二条命令应返回 `com.jktv.launcher`。
 
 ### 4. 开启应用内开关
 
@@ -74,7 +74,7 @@ adb -s TV_IP:PORT shell reboot
 恢复调试连接后可读取诊断：
 
 ```sh
-adb -s TV_IP:PORT shell dumpsys activity io.github.op7418.guizangtv
+adb -s TV_IP:PORT shell dumpsys activity com.jktv.launcher
 ```
 
 查找 `BootStart:`：`enabled=true`、`configured=true`，以及“已在本次开机后进入桌面”。该确认来自桌面恢复显示，不把单纯发出启动请求当作成功。

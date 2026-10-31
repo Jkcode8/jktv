@@ -33,7 +33,7 @@ class Codex:
                                         stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True)
         threading.Thread(target=self.read, daemon=True).start()
         try:
-            self.rpc('initialize', {'clientInfo': {'name': 'guizang_tv', 'title': 'GuiZang TV', 'version': '0.1.0'}})
+            self.rpc('initialize', {'clientInfo': {'name': 'jktv', 'title': 'JK TV', 'version': '0.1.0'}})
             self.write({'method': 'initialized', 'params': {}})
         except Exception:
             self.close()
@@ -133,7 +133,7 @@ class Chat:
             if not self.thread:
                 result = self.codex.rpc('thread/start', {'cwd': self.work, 'ephemeral': True,
                     'sandbox': 'read-only', 'approvalPolicy': 'never',
-                    'developerInstructions': '你是归藏 TV 的 Codex 试用助手。用简洁中文回答，适合电视阅读。此版本仅文字对话，不使用工具、不访问文件、不控制设备。没有实时天气、日程、米家、聊天历史权限；不声称已执行操作。'})
+                    'developerInstructions': '你是 JK TV 的 AI 助手。用简洁中文回答，适合电视阅读。此版本仅文字对话，不使用工具、不访问文件、不控制设备。没有实时天气、日程、米家、聊天历史权限；不声称已执行操作。'})
                 self.thread = result['thread']['id']
             result = self.codex.rpc('turn/start', {'threadId': self.thread,
                 'input': [{'type': 'text', 'text': text}], 'effort': 'low'})
@@ -231,7 +231,7 @@ def setup(home, host, port):
     home.mkdir(parents=True, exist_ok=True, mode=0o700)
     if (home / 'config.json').exists(): raise SystemExit('配置已存在；如需新配对，请使用新目录，旧文件保留。')
     subprocess.run(['openssl', 'req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-days', '365',
-                    '-keyout', str(home/'key.pem'), '-out', str(home/'cert.pem'), '-subj', '/CN=GuiZang TV',
+                    '-keyout', str(home/'key.pem'), '-out', str(home/'cert.pem'), '-subj', '/CN=JK TV',
                     '-addext', 'subjectAltName=IP:'+host], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     cert = ssl.PEM_cert_to_DER_cert((home/'cert.pem').read_text())
     conf = {'host': host, 'port': port, 'token': secrets.token_urlsafe(32), 'pin': hashlib.sha256(cert).hexdigest()}

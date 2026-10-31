@@ -1,5 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-feature android:name="android.software.leanback" android:required="false" />
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
     <queries>
@@ -10,7 +11,7 @@
         <package android:name="com.mitv.tvhome" />
     </queries>
     <application android:label="@string/app_name" android:icon="@drawable/ic_launcher"
-        android:banner="@drawable/banner" android:theme="@style/Theme.GuiZangTV"
+        android:banner="@drawable/banner" android:theme="@style/Theme.JKTV"
         android:allowBackup="false" android:supportsRtl="true">
         <activity android:name=".FrameHomeActivity" android:exported="true"
             android:launchMode="singleTask" android:stateNotNeeded="true"
@@ -28,6 +29,17 @@
                 <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".ImageViewerActivity" android:exported="false"
+            android:excludeFromRecents="true" android:stateNotNeeded="true"
+            android:configChanges="orientation|screenSize|keyboard|keyboardHidden|uiMode"
+            android:screenOrientation="landscape" />
+        <activity android:name=".AudioPlayerActivity" android:exported="false"
+            android:excludeFromRecents="true" android:configChanges="orientation|screenSize|keyboard|keyboardHidden|uiMode"
+            android:screenOrientation="landscape" />
+        <activity android:name=".FolderActivity" android:exported="false"
+            android:excludeFromRecents="true" android:stateNotNeeded="true"
+            android:configChanges="orientation|screenSize|keyboard|keyboardHidden|uiMode"
+            android:screenOrientation="landscape" />
         <!-- Xiaomi's package-based startup hook resolves INFO before LAUNCHER.
              Ordinary TV app-list entries still open FrameHomeActivity directly. -->
         <activity android:name=".BootGateActivity" android:exported="true"

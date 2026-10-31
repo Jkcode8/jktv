@@ -1,22 +1,22 @@
 plugins { id 'com.android.application' }
 
 android {
-    namespace 'io.github.op7418.guizangtv'
+    namespace 'com.jktv.launcher'
     compileSdk 34
     defaultConfig {
-        applicationId 'io.github.op7418.guizangtv'
-        minSdk 26
+        applicationId 'com.jktv.launcher'
+        minSdk 23
         targetSdk 34
         versionCode 6
         versionName '0.4.0-dev'
     }
     signingConfigs {
         release {
-            if (System.getenv('GUIZANG_KEYSTORE')) {
-                storeFile file(System.getenv('GUIZANG_KEYSTORE'))
-                storePassword System.getenv('GUIZANG_STORE_PASSWORD')
-                keyAlias System.getenv('GUIZANG_KEY_ALIAS') ?: 'guizang-tv'
-                keyPassword System.getenv('GUIZANG_KEY_PASSWORD') ?: System.getenv('GUIZANG_STORE_PASSWORD')
+            if (System.getenv('JKTV_KEYSTORE')) {
+                storeFile file(System.getenv('JKTV_KEYSTORE'))
+                storePassword System.getenv('JKTV_STORE_PASSWORD')
+                keyAlias System.getenv('JKTV_KEY_ALIAS') ?: 'jktv'
+                keyPassword System.getenv('JKTV_KEY_PASSWORD') ?: System.getenv('JKTV_STORE_PASSWORD')
             }
         }
     }
@@ -25,12 +25,18 @@ android {
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            if (System.getenv('GUIZANG_KEYSTORE')) signingConfig signingConfigs.release
+            if (System.getenv('JKTV_KEYSTORE')) signingConfig signingConfigs.release
         }
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
+        // Android 6.0 (API 23) lacks Java 8 interface defaults such as
+        // Map.putIfAbsent / List.sort / Collection.removeIf, so rewrite them.
+        coreLibraryDesugaringEnabled true
     }
 }
-dependencies { testImplementation 'junit:junit:4.13.2' }
+dependencies {
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.5'
+    testImplementation 'junit:junit:4.13.2'
+}
