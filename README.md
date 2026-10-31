@@ -6,6 +6,8 @@
 
 ![首页](screenshots/01-home.jpg)
 
+> 仓库：<https://github.com/Jkcode8/jktv>　·　`git clone https://github.com/Jkcode8/jktv.git`
+
 ---
 
 ## 这个版本从哪来
@@ -122,6 +124,8 @@
 环境：JDK 17、Gradle 8.9、Android SDK 34（build-tools 34）。
 
 ```bash
+git clone https://github.com/Jkcode8/jktv.git
+cd jktv
 ./gradlew :app:assembleDebug
 ```
 
