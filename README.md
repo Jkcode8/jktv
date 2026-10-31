@@ -6,6 +6,8 @@
 
 ![首页](screenshots/01-home.jpg)
 
+**[下载 v0.4.0 APK](https://github.com/Jkcode8/jktv/releases/latest)**　·　包名 `com.jktv.launcher`　·　最低 Android 6.0（API 23）
+
 > 仓库：<https://github.com/Jkcode8/jktv>　·　`git clone https://github.com/Jkcode8/jktv.git`
 
 ---
@@ -131,6 +133,8 @@ cd jktv
 
 产物在 `app/build/outputs/apk/debug/app-debug.apk`。
 
+打正式包用 `./gradlew :app:assembleRelease`，但必须先配好签名环境变量（见文末「关于包名与签名」），否则产出的是未签名 APK，装不上。
+
 > 首次构建会下载 Gradle 8.9（约 130 MB）和全部依赖。国内网络如果卡在 Gradle 下载这一步，把 `gradle/wrapper/gradle-wrapper.properties` 里的 `distributionUrl` 换成 `https\://mirrors.cloud.tencent.com/gradle/gradle-8.9-bin.zip` 即可。
 >
 > `settings.gradle` 里已经预置了阿里云 Maven 镜像，专门为了国内网络拉依赖。不需要的话删掉那几行 `maven { url 'https://maven.aliyun.com/...' }`。
@@ -139,13 +143,17 @@ cd jktv
 
 ## 安装到电视
 
+从 [Releases](https://github.com/Jkcode8/jktv/releases) 下载 `JKTV-0.4.0.apk`，用 U 盘拷进去装，或者走 adb：
+
 ```bash
 adb connect <电视IP>:5555
-adb install -r app-debug.apk
+adb install -r JKTV-0.4.0.apk
 
 # 开机自启：把包名写入系统设置项
 adb shell settings put system start_3rd_app com.jktv.launcher
 ```
+
+也可以自己构建，release 产物在 `app/build/outputs/apk/release/app-release.apk`（需要配置签名，见文末）。
 
 装好后按遥控器首页键回到 JK TV；想退回小米原桌面，在设置里关掉「桌面与启动」，或直接卸载——应用没有替换任何系统组件。
 
@@ -177,6 +185,10 @@ export JKTV_KEY_PASSWORD=******
 ```
 
 不配置这组环境变量时，构建产出未签名 APK，只能自己调试用。密钥与密码不要提交到 Git。
+
+**关于已发布的 APK**：Releases 里的包用项目自签证书（`CN=JK TV`，RSA 4096，30 年有效期）签名，同时带 v1（JAR）与 v2 签名方案——Android 6 只认 v1，缺了就装不上。
+
+如果你要长期维护这个应用，务必在首次发布后把 keystore 备份好：Android 只允许同一签名的 APK 覆盖升级，换证书就只能卸载重装，用户数据（壁纸、入口配置）会丢。自己 fork 重新发版的话，请生成自己的 keystore，不要沿用这里的包名和签名。
 
 ---
 
