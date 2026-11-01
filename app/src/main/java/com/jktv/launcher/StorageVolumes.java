@@ -55,7 +55,16 @@ final class StorageVolumes {
         return dir == null ? null : dir.getAbsolutePath();
     }
 
-    /** 入口显示名：内部存储根直说，内部存储的子目录用目录名，其余按移动介质处理。 */
+    /** 是不是某个卷的根（{@code /storage/xxx} 或内部存储根）；子目录不算。 */
+    static boolean isVolumeRoot(String path) {
+        if (path == null || path.isEmpty()) return false;
+        return path.equals(PRIMARY) || path.matches("/storage/[^/]+");
+    }
+
+    /**
+     * 入口显示名：卷根按介质类型称呼，卷里的子目录用它自己的目录名。
+     * 子目录名很重要——入口指到 {@code /U盘/动画} 时，叫"移动存储"就分不出是什么了。
+     */
     static String label(String path) {
         if (path == null || path.isEmpty()) return "存储";
         if (path.startsWith(PRIMARY)) {
@@ -63,6 +72,20 @@ final class StorageVolumes {
             if (tail.startsWith("/")) tail = tail.substring(1);
             return tail.isEmpty() ? "内部存储" : tail;
         }
-        return "移动存储";
+        if (isVolumeRoot(path)) return "移动存储";
+        int cut = path.lastIndexOf('/');
+        return cut < 0 || cut == path.length() - 1 ? "移动存储" : path.substring(cut + 1);
+    }
+
+    /** {@code path} 落在哪个卷里；认不出来就返回它自己。 */
+    static String volumeOf(String path, List<String> removable, String primary) {
+        if (path == null || path.isEmpty()) return path;
+        if (primary != null && within(path, primary)) return primary;
+        if (removable != null) for (String root : removable) if (within(path, root)) return root;
+        return path;
+    }
+
+    private static boolean within(String path, String root) {
+        return root != null && (path.equals(root) || path.startsWith(root + "/"));
     }
 }

@@ -17,6 +17,16 @@ import java.util.*;
 
 /** Remote-first grouped settings. Focus browses; OK commits; Back returns one level. */
 final class HomeSettings {
+    /** 一层里最多列这么多子目录：整页都是几百个条目时，遥控器翻不动，渲染也慢。 */
+    private static final int MAX_BROWSE=60;
+    private static final java.text.Collator COLLATOR=java.text.Collator.getInstance(Locale.CHINA);
+    private static final Comparator<File> BY_NAME=(x,y)->COLLATOR.compare(x.getName(),y.getName());
+    /**
+     * 列目录时跳过的系统目录：隐藏目录（.thumbnails 之类）、应用私有的 Android/，
+     * 还有 Windows 盘一插上就有的两个——它们既读不了，也不该被选成首页入口。
+     */
+    private static final Set<String> SYSTEM_FOLDERS=new HashSet<>(Arrays.asList(
+            "Android","System Volume Information","$RECYCLE.BIN","LOST.DIR"));
     private final FrameHomeActivity a;
     private Dialog dialog;
     private String page="overview";
@@ -61,6 +71,8 @@ final class HomeSettings {
     private void back(){
         a.wallpapers.cancelPreview();a.wallpapers.cancelSelection();
         if(page.equals("overview")){close();return;}
+        // 浏览页不逐层退：一次返回就回到选择目录的那一页，不然深目录要按很多次。
+        if(page.startsWith("browse:")){String target=browseTarget(page);go(target.equals("add")?"adddir":"pick:"+target);return;}
         if(page.startsWith("rename:")||page.startsWith("pick:")){go("item:"+entryOf(page));return;}
         go(page.equals("city")?"weather":page.equals("wallpaper")||page.equals("rotation")?"background":page.equals("adddir")?"add":page.startsWith("item:")||page.equals("add")?"home":"overview");
     }
@@ -71,10 +83,18 @@ final class HomeSettings {
             default:
                 if(page.startsWith("rename:"))return "首页内容 / 重命名";
                 if(page.startsWith("pick:"))return "首页内容 / 更换目录";
+                if(page.startsWith("browse:"))return "首页内容 / 选择文件夹";
                 return "首页内容 / "+a.items.name(page.substring(5));}
     }
     /** 从 {@code rename:dir:/storage/x} 这类页面名里取回入口 ID。 */
     static String entryOf(String page){int cut=page.indexOf(':');return cut<0?"":page.substring(cut+1);}
+    /**
+     * 浏览页的页面名：目标（{@code add} 或某个入口 ID）与当前目录用竖线隔开。
+     * 目录路径里只有斜杠，不会和分隔符撞上，不必为页面名另做一套转义。
+     */
+    static String browseName(String target,String path){return "browse:"+target+"|"+path;}
+    static String browseTarget(String page){int bar=page.indexOf('|');int cut=page.indexOf(':')+1;return page.substring(cut,bar<0?page.length():bar);}
+    static String browsePath(String page){int bar=page.indexOf('|');return bar<0?"":page.substring(bar+1);}
     private void render(){
         rendering=true;choices.clear();nameInput=null;
         boolean overview=page.equals("overview");
@@ -137,16 +157,20 @@ final class HomeSettings {
                 entry("文件夹","从存储里选一个目录",()->go("adddir"));
                 a.items.discover();for(String id:a.items.names.keySet())if(!a.items.order.contains(id))entry(a.items.name(id),"添加到首页末尾",()->addEntry(id));break;
             case "adddir": {
+                heading("浏览文件夹");
+                for(String root:a.items.removable())entry("浏览 "+a.items.folderLabel(root),"进入后可以一层层选子文件夹",()->go(browseName("add",root)));
+                String primary=StorageVolumes.primary();
+                if(primary!=null)entry("浏览 内部存储","进入后可以一层层选子文件夹",()->go(browseName("add",primary)));
+                heading("常用位置");
                 int found=0;
                 for(String root:a.items.removable())if(folder(root))found++;
-                String primary=StorageVolumes.primary();
                 if(primary!=null){
                     for(String sub:new String[]{"Movies","Pictures","DCIM","Download"}){
                         File dir=new File(primary,sub);if(dir.isDirectory()&&folder(dir.getAbsolutePath()))found++;
                     }
                     if(folder(primary))found++;
                 }
-                if(found==0)note("没有可添加的目录：它们已经都在首页上了，或者当前没有插着存储设备。");
+                if(found==0)note("这些常用位置已经都在首页上了。要找别的文件夹，点上面的「浏览」一层层进去。");
                 else note("选中后加到首页末尾。换硬盘导致入口失效时，把它从首页隐藏，再回来重新选一次。");
                 break;
             }
@@ -185,6 +209,7 @@ final class HomeSettings {
             default:
                 if(page.startsWith("rename:")){renamePage(entryOf(page));break;}
                 if(page.startsWith("pick:")){pickPage(entryOf(page));break;}
+                if(page.startsWith("browse:")){browsePage(browseTarget(page),browsePath(page));break;}
                 String id=page.substring(5);int pos=a.items.order.indexOf(id);
                 if(id.startsWith("dir:")){
                     String custom=a.items.alias(id);
@@ -331,17 +356,78 @@ final class HomeSettings {
     /** 换目录页：当前入口指向别处，位置和名字都保留。 */
     private void pickPage(String id){
         note("当前指向：" + id.substring(4));
+        heading("浏览文件夹");
+        for(String root:a.items.removable())entry("浏览 "+a.items.folderLabel(root),"进入后可以一层层选子文件夹",()->go(browseName(id,root)));
+        String primary=StorageVolumes.primary();
+        if(primary!=null)entry("浏览 内部存储","进入后可以一层层选子文件夹",()->go(browseName(id,primary)));
+        heading("常用位置");
         int found=0;
         for(String root:a.items.removable())if(folderFor(id,root))found++;
-        String primary=StorageVolumes.primary();
         if(primary!=null){
             for(String sub:new String[]{"Movies","Pictures","DCIM","Download"}){
                 File dir=new File(primary,sub);if(dir.isDirectory()&&folderFor(id,dir.getAbsolutePath()))found++;
             }
             if(folderFor(id,primary))found++;
         }
-        if(found==0)note("没有别的可选目录：它们已经都在首页上了，或者当前没有插着存储设备。");
+        if(found==0)note("这些常用位置都已在首页上或不适用。要指向别的文件夹，点上面的「浏览」一层层进去。");
         else note("选中后替换当前入口，位置和名字保持不变。");
+    }
+
+    /**
+     * 一层一层翻的目录选择。添加文件夹与更换目录共用这一页，只有确认那一手动的不一样：
+     * 目标是 {@code add} 就新加一条，否则替换指定入口指向的目录。
+     */
+    private void browsePage(String target,String path){
+        heading(browseLocation(path));
+        List<File> folders=subfolders(new File(path));
+        if(folders==null){note("这个文件夹读不出来，可能没有访问权限。按返回换一个位置。");return;}
+        int shown=Math.min(folders.size(),MAX_BROWSE);
+        for(int i=0;i<shown;i++){
+            File child=folders.get(i);
+            boolean onHome=a.items.order.contains("dir:"+child.getAbsolutePath());
+            entry(child.getName(),onHome?"已在首页":"",()->go(browseName(target,child.getAbsolutePath())));
+        }
+        if(folders.size()>shown)note("这里还有 "+(folders.size()-shown)+" 个文件夹没列出来，按名字排序靠前的已经显示。");
+        if(!StorageVolumes.isVolumeRoot(path)){
+            String up=new File(path).getParentFile()==null?null:new File(path).getParentFile().getAbsolutePath();
+            if(up!=null)entry("上一级",up,()->go(browseName(target,up)));
+        }
+        entry("选这个文件夹",a.items.order.contains("dir:"+path)?"已在首页":path,()->chooseDir(target,path));
+        if(folders.isEmpty())note("这里没有子文件夹，可以直接选这一层。");
+    }
+
+    /** 顶部位置提示：卷名加相对路径，比一长串 /storage/… 好认。 */
+    private String browseLocation(String path){
+        String root=StorageVolumes.volumeOf(path,a.items.removable(),StorageVolumes.primary());
+        if(root.equals(path))return a.items.folderLabel(path);
+        return a.items.folderLabel(root)+" ／ "+path.substring(root.length()+1).replace('/','／');
+    }
+
+    /** 子目录列表；整个读不出来时返回 null（多半是没权限），空列表才是"真的没有子目录"。 */
+    private static List<File> subfolders(File dir){
+        File[] children;
+        try{children=dir.listFiles();}catch(SecurityException denied){return null;}
+        if(children==null)return null;
+        List<File> folders=new ArrayList<>();
+        for(File child:children){
+            String name=child.getName();
+            if(name.startsWith(".")||SYSTEM_FOLDERS.contains(name))continue;
+            if(!child.isDirectory())continue;
+            folders.add(child);
+        }
+        Collections.sort(folders,BY_NAME);
+        return folders;
+    }
+
+    private void chooseDir(String target,String path){
+        String id="dir:"+path;
+        if(target.equals("add")){
+            if(a.items.order.contains(id)){a.message("这个文件夹已经在首页上了");return;}
+            addEntry(id);return;
+        }
+        if(id.equals(target)){a.message("入口已经指向这个文件夹");return;}
+        if(a.items.order.contains(id)){a.message("这个文件夹已经在首页上了");return;}
+        replaceDir(target,path);
     }
 
     /** 候选目录：排掉当前这条与首页上已有的，选中即替换。 */
