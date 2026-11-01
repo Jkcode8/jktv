@@ -96,6 +96,11 @@ jobs:
           ( cd out && sha256sum "$NAME" | tee SHA256SUMS.txt )
           echo "APK_NAME=$NAME" >> "$GITHUB_ENV"
 
+      - name: 拉回标签附注
+        # actions/checkout 按 commit 检出 tag，本地只剩一个轻量引用，
+        # `%(contents)` 因此为空，Release 说明会退回成提交信息。重新拉一次真标签。
+        run: git fetch --tags --force origin
+
       - name: 发布
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
