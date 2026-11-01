@@ -4,12 +4,19 @@
 [![Latest release](https://img.shields.io/github/v/release/Jkcode8/jktv?label=release&color=c08a3e)](https://github.com/Jkcode8/jktv/releases/latest)
 [![minSdk](https://img.shields.io/badge/minSdk-23%20%C2%B7%20Android%206.0-3ddc84)](https://github.com/Jkcode8/jktv)
 [![License](https://img.shields.io/github/license/Jkcode8/jktv?color=2f6f9f)](LICENSE)
+[![Landing page](https://img.shields.io/badge/landing%20page-jkcode8.github.io%2Fjktv-d97757)](https://jkcode8.github.io/jktv/)
 
 **A launcher that puts the movies and photos on your hard drive on the first screen — one press, it plays.**
 
 A lightweight Android TV launcher for older televisions. It reads external storage directly, generates real thumbnails, and shows weather. No recommendation feed, no boot ads, no account.
 
-![Home](screenshots/01-home.jpg)
+<p align="center">
+  <a href="https://jkcode8.github.io/jktv/"><img src="screenshots/intro.gif" width="720" alt="JK TV: home screen, folders and settings" /></a>
+  <br />
+  <b><a href="https://jkcode8.github.io/jktv/">▶ 35-second intro</a></b> (with sound)　·　
+  <a href="https://jkcode8.github.io/jktv/">Landing page</a> (light / dark)　·　
+  <a href="https://jkcode8.github.io/jktv/JKTV-intro.pdf">PDF</a>
+</p>
 
 **[Download the latest APK](https://github.com/Jkcode8/jktv/releases/latest)**　·　Package `com.jktv.launcher`　·　Android 6.0+ (API 23)
 

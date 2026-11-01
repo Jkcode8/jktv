@@ -4,6 +4,7 @@
 [![最新版本](https://img.shields.io/github/v/release/Jkcode8/jktv?label=release&color=c08a3e)](https://github.com/Jkcode8/jktv/releases/latest)
 [![minSdk](https://img.shields.io/badge/minSdk-23%20%C2%B7%20Android%206.0-3ddc84)](https://github.com/Jkcode8/jktv)
 [![License](https://img.shields.io/github/license/Jkcode8/jktv?color=2f6f9f)](LICENSE)
+[![介绍页](https://img.shields.io/badge/%E4%BB%8B%E7%BB%8D%E9%A1%B5-jkcode8.github.io%2Fjktv-d97757)](https://jkcode8.github.io/jktv/)
 
 **把硬盘里的片子与照片，放到开机第一屏；一次点击，直接开播。**
 
@@ -11,7 +12,13 @@
 
 *中文　·　[English](README.en.md)*
 
-![首页](screenshots/01-home.jpg)
+<p align="center">
+  <a href="https://jkcode8.github.io/jktv/"><img src="screenshots/intro.gif" width="720" alt="JK TV 演示：开机第一屏、目录、设置" /></a>
+  <br />
+  <b><a href="https://jkcode8.github.io/jktv/">▶ 35 秒介绍片</a></b>（有声）　·　
+  <a href="https://jkcode8.github.io/jktv/">在线介绍页</a>（浅色／深色可切）　·　
+  <a href="https://jkcode8.github.io/jktv/JKTV-intro.pdf">PDF 介绍</a>
+</p>
 
 **[下载最新版 APK](https://github.com/Jkcode8/jktv/releases/latest)**　·　包名 `com.jktv.launcher`　·　最低 Android 6.0（API 23）
 
