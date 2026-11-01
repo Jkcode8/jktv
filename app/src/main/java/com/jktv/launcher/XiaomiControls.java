@@ -12,8 +12,27 @@ import android.provider.Settings;
 final class XiaomiControls {
     private XiaomiControls() { }
 
+    /** Brand-level support. Used where no Context is at hand, e.g. label mapping. */
     static boolean enabled() {
-        return "MiTV-MTSU0".equals(Build.MODEL);
+        if ("MiTV-MTSU0".equals(Build.MODEL)) return true;
+        return "xiaomi".equalsIgnoreCase(Build.BRAND)
+                || "xiaomi".equalsIgnoreCase(Build.MANUFACTURER);
+    }
+
+    /**
+     * Availability on this specific unit: Xiaomi brand plus the stock launcher package
+     * actually installed. Upstream gated every entry point on one verified model, which
+     * silently disabled them all on other Mi TV builds. Probing the package keeps the
+     * same safety without hard-coding a model name.
+     */
+    static boolean enabled(Context context) {
+        if (!enabled()) return false;
+        try {
+            context.getPackageManager().getPackageInfo("com.mitv.tvhome", 0);
+            return true;
+        } catch (PackageManager.NameNotFoundException absent) {
+            return false;
+        }
     }
 
     /**
@@ -27,7 +46,7 @@ final class XiaomiControls {
 
     /** Observed on this firmware: source 23 = HDMI 1, source 24 = HDMI 2. */
     static boolean openHdmi(Context context, int port) {
-        if (!enabled() || port < 1 || port > 2) return false;
+        if (!enabled(context) || port < 1 || port > 2) return false;
         ComponentName target = new ComponentName("com.xiaomi.mitv.tvplayer",
                 "com.xiaomi.mitv.tvplayer.ExternalSourceActivity");
         try {
@@ -47,7 +66,7 @@ final class XiaomiControls {
     }
 
     static Intent settings(Context context, String standardAction) {
-        if (!enabled()) return new Intent(standardAction);
+        if (!enabled(context)) return new Intent(standardAction);
         String action, activity;
         if (Settings.ACTION_SETTINGS.equals(standardAction)) {
             action = "com.xiaomi.mitv.settings.SETTINGS";
@@ -62,7 +81,7 @@ final class XiaomiControls {
     }
 
     static boolean showInputs(Context context) {
-        if (!enabled()) return false;
+        if (!enabled(context)) return false;
         ComponentName receiver = new ComponentName("com.xiaomi.mitv.settings",
                 "com.xiaomi.mitv.settings.SettingsBroadcastReceiver");
         try {
@@ -91,7 +110,7 @@ final class XiaomiControls {
     }
 
     static boolean startStockHome(Context context, ComponentName component) {
-        if (!enabled() || !"com.mitv.tvhome".equals(component.getPackageName())) return false;
+        if (!enabled(context) || !"com.mitv.tvhome".equals(component.getPackageName())) return false;
         // The public MAIN alias is exported without HOME_STATE. The directly enumerated
         // MainActivityUserMode target requires Xiaomi's signature permission on this firmware.
         ComponentName alias = new ComponentName("com.mitv.tvhome", "com.mitv.tvhome.MainActivity");
