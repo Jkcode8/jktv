@@ -4,6 +4,7 @@ import android.app.Dialog;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
+import android.text.InputFilter;
 import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.style.AbsoluteSizeSpan;
@@ -34,6 +35,7 @@ final class HomeSettings {
     private int cityRequest;
     private boolean searching;
     private EditText cityInput;
+    private EditText nameInput;
     private String cityQuery="",cityError="";
     private List<HomeWeather.City> cityResults=new ArrayList<>();
     HomeSettings(FrameHomeActivity activity){a=activity;}
@@ -59,16 +61,22 @@ final class HomeSettings {
     private void back(){
         a.wallpapers.cancelPreview();a.wallpapers.cancelSelection();
         if(page.equals("overview")){close();return;}
+        if(page.startsWith("rename:")||page.startsWith("pick:")){go("item:"+entryOf(page));return;}
         go(page.equals("city")?"weather":page.equals("wallpaper")||page.equals("rotation")?"background":page.equals("adddir")?"add":page.startsWith("item:")||page.equals("add")?"home":"overview");
     }
     private void go(String next){cityRequest++;searching=false;a.wallpapers.cancelPreview();a.wallpapers.cancelSelection();page=next;render();}
     private String title(){
         switch(page){case "overview":return "设置";case "background":return "背景";case "wallpaper":return "壁纸";case "rotation":return "轮播";
-            case "weather":return "时间与天气";case "city":return "选择城市";case "layout":return "布局";case "type":return "字体";case "focus":return "选中样式";case "home":return "首页内容";case "add":return "首页内容 / 添加";case "adddir":return "首页内容 / 添加文件夹";case "tv":return "电视与启动";case "experiments":return "实验性功能";
-            default:return "首页内容 / "+a.items.name(page.substring(5));}
+            case "weather":return "时间与天气";case "city":return "选择城市";case "layout":return "布局";case "type":return "字体";case "focus":return "选中样式";case "home":return "首页内容";case "add":return "首页内容 / 添加";case "adddir":return "首页内容 / 添加文件夹";            case "tv":return "电视与启动";case "experiments":return "实验性功能";
+            default:
+                if(page.startsWith("rename:"))return "首页内容 / 重命名";
+                if(page.startsWith("pick:"))return "首页内容 / 更换目录";
+                return "首页内容 / "+a.items.name(page.substring(5));}
     }
+    /** 从 {@code rename:dir:/storage/x} 这类页面名里取回入口 ID。 */
+    static String entryOf(String page){int cut=page.indexOf(':');return cut<0?"":page.substring(cut+1);}
     private void render(){
-        rendering=true;choices.clear();
+        rendering=true;choices.clear();nameInput=null;
         boolean overview=page.equals("overview");
         LinearLayout panel=new LinearLayout(a);panel.setOrientation(LinearLayout.VERTICAL);
         panel.setPadding(a.dp(70),a.dp(overview?42:24),a.dp(70),a.dp(30));
@@ -175,7 +183,15 @@ final class HomeSettings {
             case "tv":
                 entry("开机自动进入",BootStart.enabled(a)?"已开启":"已关闭",()->BootStart.show(a));entry("电视系统设置","网络、声音、画面等",a::systemSettings);entry("小米原桌面","打开原来的电视首页",a::stockHome);break;
             default:
+                if(page.startsWith("rename:")){renamePage(entryOf(page));break;}
+                if(page.startsWith("pick:")){pickPage(entryOf(page));break;}
                 String id=page.substring(5);int pos=a.items.order.indexOf(id);
+                if(id.startsWith("dir:")){
+                    String custom=a.items.alias(id);
+                    entry("重命名",custom!=null?custom+"　·　自定义":"按存储自动命名",()->go("rename:"+id));
+                    entry("更换目录",id.substring(4),()->go("pick:"+id));
+                    if(custom!=null)entry("恢复自动名称",a.items.folderLabel(id.substring(4)),()->applyName(id,""));
+                }
                 if(pos>0)entry("上移","与上一项交换位置",()->move(id,-1));if(pos>=0&&pos<a.items.order.size()-1)entry("下移","与下一项交换位置",()->move(id,1));
                 if(a.items.order.size()>1)entry("从首页隐藏","应用仍保留在电视上",()->{List<String> next=new ArrayList<>(a.items.order);next.remove(id);if(save(next))go("home");});
                 else note("至少保留一个首页入口。");break;
@@ -291,6 +307,65 @@ final class HomeSettings {
         if(a.items.order.contains(id))return false;
         entry(a.items.folderLabel(path),path,()->addEntry(id));
         return true;
+    }
+
+    /**
+     * 重命名页：一个输入框加几个常用名。遥控器打中文很费劲，预设才是主要路径；
+     * 图标跟着名字走，所以这里改名等于同时换图标。
+     */
+    private void renamePage(String id){
+        nameInput=new EditText(a);nameInput.setText(a.items.name(id));
+        nameInput.setTextColor(0xF2FFFFFF);nameInput.setHintTextColor(0x99FFFFFF);nameInput.setTextSize(18);
+        nameInput.setHint("入口名，最多 12 个字");nameInput.setSingleLine(true);
+        nameInput.setFilters(new InputFilter[]{new InputFilter.LengthFilter(12)});
+        nameInput.setPadding(a.dp(14),0,a.dp(14),0);
+        nameInput.setBackground(WallpaperMaterial.rounded(0x26FFFFFF,a.dp(10)));
+        nameInput.setOnFocusChangeListener((v,focus)->v.setBackground(WallpaperMaterial.rounded(focus?0x45FFFFFF:0x26FFFFFF,a.dp(10))));
+        options.addView(nameInput,new LinearLayout.LayoutParams(-1,a.dp(44)));
+        entry("保存这个名字","",()->applyName(id,nameInput==null?"":nameInput.getText().toString()));
+        heading("常用名字");
+        for(String preset:new String[]{"电影动画","家庭照片","我的视频","我的文件"})entry(preset,"",()->applyName(id,preset));
+        note("名字决定左侧图标：带「电影／视频／动画」是摄像机，带「照片／相册」是照片，其余是文件夹。");
+    }
+
+    /** 换目录页：当前入口指向别处，位置和名字都保留。 */
+    private void pickPage(String id){
+        note("当前指向：" + id.substring(4));
+        int found=0;
+        for(String root:a.items.removable())if(folderFor(id,root))found++;
+        String primary=StorageVolumes.primary();
+        if(primary!=null){
+            for(String sub:new String[]{"Movies","Pictures","DCIM","Download"}){
+                File dir=new File(primary,sub);if(dir.isDirectory()&&folderFor(id,dir.getAbsolutePath()))found++;
+            }
+            if(folderFor(id,primary))found++;
+        }
+        if(found==0)note("没有别的可选目录：它们已经都在首页上了，或者当前没有插着存储设备。");
+        else note("选中后替换当前入口，位置和名字保持不变。");
+    }
+
+    /** 候选目录：排掉当前这条与首页上已有的，选中即替换。 */
+    private boolean folderFor(String entryId,String path){
+        String id="dir:"+path;
+        if(id.equals(entryId)||a.items.order.contains(id))return false;
+        entry(a.items.folderLabel(path),path,()->replaceDir(entryId,path));
+        return true;
+    }
+
+    private void applyName(String id,String value){
+        if(!a.items.rename(id,value)){failed();return;}
+        nameInput=null;a.refreshHome();go("item:"+id);
+    }
+
+    private void replaceDir(String entryId,String path){
+        String id="dir:"+path;
+        List<String> next=new ArrayList<>(a.items.order);int index=next.indexOf(entryId);
+        if(index<0)return;
+        String custom=a.items.alias(entryId);
+        next.set(index,id);
+        if(!save(next))return;
+        if(custom!=null)a.items.rename(id,custom);
+        a.refreshHome();go("item:"+id);
     }
 
     private void addEntry(String id){
