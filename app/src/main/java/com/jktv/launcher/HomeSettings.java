@@ -371,7 +371,7 @@ final class HomeSettings {
             for(String preset:presets)entry(preset,"",()->applyName(id,preset));
         }
         if(id.startsWith("dir:"))note("名字决定左侧图标：带「电影／视频／动画」是摄像机，带「照片／相册」是照片，其余是文件夹。");
-        else if(HomeItems.isHdmi(id))note("HDMI 入口的图标固定，只改显示的名字。点开后会切到对应接口；接的是什么设备自己心里有数就行。");
+        else if(HomeItems.isHdmi(id))note("信号源的图标也看名字：带「游戏」是手柄，带「苹果／Apple」是那个播放盒，其余是显示器。点开后切到对应接口。");
         else note("只改首页显示的名字，图标仍是这个应用自己的。");
     }
 
