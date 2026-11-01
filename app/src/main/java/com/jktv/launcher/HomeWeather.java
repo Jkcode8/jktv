@@ -43,7 +43,7 @@ final class HomeWeather {
         prefs=context.getSharedPreferences("home-weather",0);this.changed=changed;
         try{JSONObject o=new JSONObject(prefs.getString("cache","{}"));reading=parse(o);}catch(Exception ignored){}
     }
-    boolean enabled(){return prefs.getBoolean("enabled",false);}
+    boolean enabled(){return prefs.getBoolean("enabled",true);}
     boolean automatic(){return prefs.getBoolean("automatic",true);}
     String city(){return automatic()?prefs.getString("auto_name","尚未识别"):prefs.getString("manual_name","尚未选择");}
     String status(){if(!enabled())return "天气已关闭";if(busy)return "正在获取天气…";if(current()!=null&&status.equals("尚未获取天气"))return "已缓存 · "+WeatherPolicy.description(reading.code);return status;}
