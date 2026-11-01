@@ -17,6 +17,7 @@
 
 - 首页默认入口把开发者本机的两个 U 盘卷 ID 与第三方应用包名写死在源码里。别的机器上装出来的入口全部指向不存在的路径，点了没有反应
 - 壁纸索引上限提为 `FrameWallpapers.MAX_CATALOG_ENTRIES`，超限时报错信息带上实际条数
+- `.github/workflows/release.yml` 在浅克隆下用 `git tag --format=%(contents)` 读不到标签附注，Release 说明会退回成提交信息。改为 `fetch-depth: 0` 并用 `for-each-ref` 判断
 
 ### 文档
 
