@@ -6,7 +6,7 @@
 
 ![首页](screenshots/01-home.jpg)
 
-**[下载 v0.4.0 APK](https://github.com/Jkcode8/jktv/releases/latest)**　·　包名 `com.jktv.launcher`　·　最低 Android 6.0（API 23）
+**[下载 v0.4.1 APK](https://github.com/Jkcode8/jktv/releases/latest)**　·　包名 `com.jktv.launcher`　·　最低 Android 6.0（API 23）
 
 > 仓库：<https://github.com/Jkcode8/jktv>　·　`git clone https://github.com/Jkcode8/jktv.git`
 
@@ -37,7 +37,7 @@
 | 音频 | 交给视频播放器，画面全黑 | 新增 `AudioPlayerActivity`：文件名、进度条、时长、上下首 |
 | 视频播放 | 通用 `ACTION_VIEW` | 小米私有 `PLAY_URL` + `playInfo`，固定调用系统播放器 |
 | 天气 | 实时天气 | 增加今日高低温与未来三天预报；TLS 兼容性重试 |
-| 壁纸 | 内置 5 张 + 轮播 | 支持导入本地照片：转 16:9、按 EXIF 摆正、剥离定位信息 |
+| 壁纸 | 内置 5 张 + 轮播 | 内置 12 张（5 张 Unsplash + 7 张作者自拍）；支持导入本地照片：转 16:9、按 EXIF 摆正、剥离定位信息 |
 | 亮色壁纸可读性 | 白字直接压在图上 | 左侧渐变随亮度加深，文字加投影 |
 | 开机自启 | — | `start_3rd_app` + 极轻量启动判断 Activity |
 | 应用名 | 归藏电视 | JK TV（包名 `com.jktv.launcher`，可与上游版本共存安装） |
@@ -141,21 +141,100 @@ cd jktv
 
 ---
 
+## 不想装开发环境？三条不用敲命令的路
+
+上面一节是给会写代码的人看的。如果你只是想把界面改成自己喜欢的样子，下面三条路都不需要在本机装 JDK 和 Android SDK。
+
+**1 · 直接装现成的**
+
+从 [Releases](https://github.com/Jkcode8/jktv/releases/latest) 下载 APK，拷进 U 盘插到电视上装。多数人的需求到这一步就够了。
+
+**2 · 让 AI 帮你改，让 GitHub 帮你编译**
+
+把仓库链接丢给任意一个能读代码的智能体——Claude、ChatGPT、Codex、Cursor、WorkBuddy 都行——说清楚你要什么，它会告诉你改哪几个文件、改成什么样。改完出 APK 有两条路：
+
+- **手上没有编译环境**：在 GitHub 上 Fork 这个仓库，用网页编辑器直接提交改动，仓库自带的 Actions 会自动编译。到 `Actions` → 最新一次运行 → 页面底部的 `Artifacts` 下载 `jktv-debug`，解压出来就是能装的 APK。debug 版功能完整，只是签名与正式包不同，不能覆盖升级正式包。
+- **有电脑**：按上一节的命令跑 `./gradlew :app:assembleDebug`。
+
+可以直接拿这段话开头：
+
+```text
+仓库：https://github.com/Jkcode8/jktv
+这是一个跑在 Android TV 上的桌面启动器（Java，minSdk 23，compileSdk 34）。
+我的电视是「＜品牌 型号＞」，系统是 Android ＜版本＞。
+我想＜把首页的「电影动画」入口默认指向 /storage/xxxx 这个目录 / 把天气城市固定为广州 / 把选中态的高亮色改成暖橙＞。
+请先说明需要改哪几个文件、每个文件改什么，再给完整代码；
+最后告诉我怎么构建，或者怎么直接在 GitHub 网页上把这些改动提交上去。
+```
+
+几句提醒：
+
+- AI 给的第一版经常「看起来对」。装到电视上试一次再定，别直接发给别人。
+- 让它改 `assets/wallpapers/catalog.json` 时注意上限是 15 条，超了整个索引会失效，应用退回渐变背景。
+- 不要用 AI 随手生成的密钥去发布 APK。签名一旦换掉，老用户只能卸载重装，壁纸和入口配置都会丢（见文末「关于包名与签名」）。
+- 顺手让它把 `applicationId` 也改掉，就能和官方包装在同一台电视上对比着看。
+
+**3 · 只想换壁纸**
+
+不用碰代码：把照片放 U 盘插到电视上，在设置里选。想打进安装包，按 [`docs/WALLPAPERS.md`](docs/WALLPAPERS.md) 的两套流程走——自己用的放 `local/`，可公开的放 `author/`。
+
+---
+
 ## 安装到电视
 
-从 [Releases](https://github.com/Jkcode8/jktv/releases) 下载 `JKTV-0.4.0.apk`，用 U 盘拷进去装，或者走 adb：
+装包有两条路：U 盘最省事，ADB 方便远程维护和批量部署。
+
+### 用 U 盘装（不需要开 ADB）
+
+从 [Releases](https://github.com/Jkcode8/jktv/releases) 下载 `JKTV-0.4.1.apk`，拷到 U 盘，插到电视上，用电视自带的「文件管理」或「媒体中心」找到这个文件，点开安装。第一次会提示「禁止安装未知来源的应用」，在弹窗里允许即可。
+
+### 先在电视上打开 ADB 调试
+
+想用 `adb install` 装包或做远程维护，得先把调试通道打开。ADB 默认是关的，而且各家入口位置不一样。
+
+**小米／红米电视（MIUI TV）**
+
+1. 遥控器按「设置」→「账号与安全」。
+2. 找到「ADB 调试」，设为**允许**。
+3. 同一页上的「安装未知来源的应用」一并允许。
+4. 回「设置」→「关于」→「网络信息」，记下电视 IP（形如 `192.168.10.14`）。
+
+有的 MIUI 版本把这一项放在「设置 → 系统 → 开发者选项」。如果两处都找不到，去「关于」里对「产品型号」连按五次确认键，开发者选项就会出现在设置菜单里。
+
+**原生 Android TV／其他品牌**
+
+「设置」→「关于」→ 对「版本号」连按七次 → 返回上一级出现「开发者选项」→ 打开「USB 调试」，同时打开「网络调试」或「ADB over network」。
+
+**Android 11 及以上**
+
+无线调试改成了配对制：「开发者选项」→「无线调试」→「使用配对码配对设备」，电脑端先 `adb pair ＜IP＞:＜配对端口＞` 输入电视上显示的六位码，再 `adb connect ＜IP＞:5555`。这两个端口不是同一个，别混用。
+
+**连上电视**
 
 ```bash
-adb connect <电视IP>:5555
-adb install -r JKTV-0.4.0.apk
+adb connect 192.168.10.14:5555   # 电视和电脑要在同一个局域网
+adb devices                       # 列表里出现 IP:5555 才算成功
+adb install -r JKTV-0.4.1.apk
 
 # 开机自启：把包名写入系统设置项
 adb shell settings put system start_3rd_app com.jktv.launcher
 ```
 
-也可以自己构建，release 产物在 `app/build/outputs/apk/release/app-release.apk`（需要配置签名，见文末）。
+第一次 `connect` 时电视上会弹「是否允许 USB 调试」，用遥控器选「一律允许」。没弹窗就 `adb kill-server` 重来一次。
 
-装好后按遥控器首页键回到 JK TV；想退回小米原桌面，在设置里关掉「桌面与启动」，或直接卸载——应用没有替换任何系统组件。
+| 现象 | 原因与处理 |
+| --- | --- |
+| `connection refused` | 电视上的 ADB 开关没开，或者电视进了休眠。唤醒后重试 |
+| 一直 `offline` / `unable to connect` | 不在同一网段，或路由器开了 AP 隔离。换手机热点试一次即可判断 |
+| 重启后又要重开 | MIUI TV 的既有行为，ADB 开关与 `start_3rd_app` 都会复位 |
+| `INSTALL_FAILED_UPDATE_INCOMPATIBLE` | 电视上已有一个同名但签名不同的应用，先卸载再装 |
+| 装完闪退 | 系统低于 Android 6.0，或签名/架构不匹配。本项目出的是 arm64-v8a 与 armeabi-v7a 通用包 |
+
+### 装好之后
+
+按遥控器首页键回到 JK TV；想退回小米原桌面，在设置里关掉「桌面与启动」，或者直接卸载——应用没有替换任何系统组件，卸掉就恢复原样。
+
+也可以自己构建，release 产物在 `app/build/outputs/apk/release/app-release.apk`（需要配置签名，见文末）。
 
 ---
 
@@ -168,6 +247,27 @@ adb shell settings put system start_3rd_app com.jktv.launcher
 | 视频播放画面无法截图 | 硬解输出在独立图层 |
 | 只适配单卷路径 | 两个直达入口绑定具体存储卷 ID，换硬盘后需要在设置里重新指定目录 |
 | 仅在一台机型上验证 | MiTV4-ANSM0 / Android 6.0.1。其他机型（尤其非小米）的视频拉起逻辑需要另做适配 |
+
+---
+
+## 壁纸素材与许可
+
+界面和交互来自归藏老师的上游版本，内置壁纸则分两批，许可各自独立：
+
+| 来源 | 数量 | 许可 | 说明 |
+| --- | --- | --- | --- |
+| 上游版本自带 | 5 张 | [Unsplash License](https://unsplash.com/license) | 由上游选定，逐张核对了原页面的作者与授权标记 |
+| 我自己拍的 | 7 张 | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/deed.zh) | 雅丹、草原、梯田、山水，v0.4.1 起加入 |
+
+两批都**可以免费使用**——当壁纸、二次分发、商用都行，条件只有一个：保留署名。Unsplash 那批按 Unsplash License 走（未做显著修改的照片不得单独出售），我拍的这批按 CC BY 4.0 走（署上「摄影：Jkcode8」即可）。
+
+要再分发，署名写这一句就够：
+
+> 壁纸来自 JK TV（<https://github.com/Jkcode8/jktv>）：5 张适用 Unsplash License，7 张由 Jkcode8 以 CC BY 4.0 授权。
+
+七张自拍做过统一处理：16:9 裁到 1920 × 1080、亮度 −0.09 EV、降饱和，再按原图平均亮度叠一层自适应暗角，输出时剥离 EXIF——拍摄定位、机型、时间都不会跟着图片跑出去。这批照片里没有人物肖像。逐张清单、处理参数与重新生成的命令见 [`docs/WALLPAPERS.md`](docs/WALLPAPERS.md)。
+
+代码是 MIT，图片不是：这两套许可互不覆盖，也都不因仓库的 MIT 声明而改变。
 
 ---
 
@@ -194,7 +294,9 @@ export JKTV_KEY_PASSWORD=******
 
 ## 截图说明
 
-文中的照片、视频均为演示素材：照片取自项目内置的 Unsplash 壁纸（Unsplash License），视频由这些图片生成的短暂推拉镜头，不含第三方影视内容与任何真人肖像。
+文中的照片、视频均为演示素材：照片取自项目内置的五张 Unsplash 壁纸（Unsplash License），视频是这些图片生成的短暂推拉镜头，不含第三方影视内容与任何真人肖像。
+
+v0.4.1 的安装包里还多了 7 张我自己拍的照片（CC BY 4.0）。本文截图是在加入这批照片之前拍的，所以图里看到的是 Unsplash 那几张。
 
 ---
 
