@@ -1,14 +1,27 @@
 # JK TV
 
+[![Android CI](https://github.com/Jkcode8/jktv/actions/workflows/android.yml/badge.svg)](https://github.com/Jkcode8/jktv/actions/workflows/android.yml)
+[![最新版本](https://img.shields.io/github/v/release/Jkcode8/jktv?label=release&color=c08a3e)](https://github.com/Jkcode8/jktv/releases/latest)
+[![minSdk](https://img.shields.io/badge/minSdk-23%20%C2%B7%20Android%206.0-3ddc84)](https://github.com/Jkcode8/jktv)
+[![License](https://img.shields.io/github/license/Jkcode8/jktv?color=2f6f9f)](LICENSE)
+
 **把硬盘里的片子与照片，放到开机第一屏；一次点击，直接开播。**
 
 一个可以在老款 Android TV 上自建桌面、直读外接硬盘的轻量 Launcher。没有推荐位、没有开机广告、没有账号，只有你自己的入口、真实缩略图和天气。
+
+*中文　·　[English](README.en.md)*
 
 ![首页](screenshots/01-home.jpg)
 
 **[下载 v0.4.1 APK](https://github.com/Jkcode8/jktv/releases/latest)**　·　包名 `com.jktv.launcher`　·　最低 Android 6.0（API 23）
 
 > 仓库：<https://github.com/Jkcode8/jktv>　·　`git clone https://github.com/Jkcode8/jktv.git`
+
+### 三十秒判断要不要往下看
+
+- **适合**：电视是 2016–2020 年的老机型，系统停在 Android 6–9，官方桌面还带着推荐位和开机广告；片子存在移动硬盘或 NAS 上，每次都要点三四层菜单才能找到。
+- **也很适合**：只想换个干净桌面，不打算折腾，直接装 APK 就行；或者想拿一个 5000 行以内、能跑在旧系统上的 Android TV 项目当练手底子。
+- **不适合**：指望用它搜片、追剧、看直播。它是桌面和文件浏览器，不提供内容源，也不接入任何影视平台。
 
 ---
 
@@ -31,7 +44,7 @@
 | 能力 | 上游 guizang-tv | 本版本 |
 | --- | --- | --- |
 | 最低系统 | `minSdk 26`（Android 8） | `minSdk 23`（Android 6），含 Java 8 API desugaring |
-| 首页入口 | 应用快捷方式 | 增加「文件夹」类型入口，可绑定存储卷路径，按下确认直接落到该目录 |
+| 首页入口 | 应用快捷方式 | 增加「文件夹」类型入口，绑定一个目录，按下确认直接落到该目录；入口可以在设置里增删
 | 目录浏览 | — | 新增 `FolderActivity`：4 列 16:9 网格、封面生成与落盘缓存 |
 | 图片查看 | — | 新增 `ImageViewerActivity`：全屏、左右翻页、序号显示 |
 | 音频 | 交给视频播放器，画面全黑 | 新增 `AudioPlayerActivity`：文件名、进度条、时长、上下首 |
@@ -245,8 +258,31 @@ adb shell settings put system start_3rd_app com.jktv.launcher
 | 电视重启后 ADB 会复位 | MIUI TV 的既有行为，需要在开发者选项里重新打开网络调试。只影响远程维护 |
 | AI 助手入口未接通 | 界面与入口来自上游，后端需要在电脑侧运行本地服务并完成一次授权。当前版本点击该入口不产生动作 |
 | 视频播放画面无法截图 | 硬解输出在独立图层 |
-| 只适配单卷路径 | 两个直达入口绑定具体存储卷 ID，换硬盘后需要在设置里重新指定目录 |
+| 入口一次只绑一个目录 | 每个文件夹入口绑定一个目录。换硬盘后旧入口会失效，需要在「设置 → 首页内容」里隐藏它，再添加新目录。首次进入时的入口由运行时探测生成，不写死任何设备路径 |
 | 仅在一台机型上验证 | MiTV4-ANSM0 / Android 6.0.1。其他机型（尤其非小米）的视频拉起逻辑需要另做适配 |
+
+## 接下来想做什么
+
+按优先级排，打勾的是已经落地的：
+
+| 方向 | 状态 | 说明 |
+| --- | --- | --- |
+| 语音对话入口 | 调研中 | 长按遥控器语音键唤起自己的对话浮层，接入本地 ASR + LLM + TTS，对话记录与偏好留在自己机器上。见下方「为什么想自己做」 |
+| 多存储卷直达 | 部分完成 | 现在可以在设置里添加任意目录入口（U 盘、SD 卡、内部存储的 Movies／Pictures 等）；换盘后仍需手动重选，未做按卷名自动匹配 |
+| 非小米机型适配 | 计划 | 视频拉起用的是小米私有 `PLAY_URL`，其他品牌需要一个可切换的通用分支 |
+| 界面文案抽到 `strings.xml` | 计划 | 目前中文散落在 Java 字符串里，抽出来才谈得上多语言 |
+| 自动化发布 | 已完成 | 打 tag 即构建、签名并上传 Release 资产，见 `.github/workflows/release.yml` |
+
+### 为什么想自己做语音
+
+这台电视的系统语音（小爱）是能用的，长按语音键就能说话，切台、查天气、放歌都行。但它有两件事做不到：
+
+- **不记事**。每次开口都是第一次见你，说了十遍「我常看纪录片」，下一句还是给你推综艺。
+- **不给你文本**。对话过程在系统里闭环，第三方应用拿不到内容，也就没法在上面做任何自己的东西。
+
+所以这个方向的目标不是「做一个更好的小爱」，而是**补上记忆这一层**：识别、理解、合成全在本地跑（用自己机器上的模型），对话历史与偏好存成本地文件，你问「上次说的那部片子后来找到没」时它真的知道你在说什么。电视端只负责三件事——收音、显示文字、播声音。
+
+难点不在模型，在**怎么拿到声音**：小米电视 4 的机身没有麦克风，遥控器通过蓝牙把音频交给系统语音服务，第三方应用能不能拿到这条通道只有真机能验证。备选是电视 USB 口插一个几十块钱的麦克风，`AudioRecord` 直接可用。
 
 ---
 
@@ -290,13 +326,28 @@ export JKTV_KEY_PASSWORD=******
 
 如果你要长期维护这个应用，务必在首次发布后把 keystore 备份好：Android 只允许同一签名的 APK 覆盖升级，换证书就只能卸载重装，用户数据（壁纸、入口配置）会丢。自己 fork 重新发版的话，请生成自己的 keystore，不要沿用这里的包名和签名。
 
+### 打 tag 自动发版
+
+仓库带了一个 release workflow（`.github/workflows/release.yml`）：推一个 `v*` 标签，它就构建、校验签名、把 APK 和 `SHA256SUMS.txt` 传上 Release。它会先核对标签与 `app/build.gradle` 里的 `versionName` 是否一致，不一致直接失败，避免发出编号对不上的包。
+
+要让它产出可覆盖升级的正式包，在仓库的 `Settings → Secrets and variables → Actions` 里加四个 secret：
+
+| Secret | 内容 |
+| --- | --- |
+| `JKTV_KEYSTORE_BASE64` | `base64 -w0 release.jks` 的输出 |
+| `JKTV_STORE_PASSWORD` | 签名库口令 |
+| `JKTV_KEY_ALIAS` | 密钥别名 |
+| `JKTV_KEY_PASSWORD` | 密钥口令 |
+
+四个缺任意一个，workflow 会退而构建 debug 包并在日志里警告，不会把未签名的包当成正式版发出去。标签写注释（`git tag -a v0.5.0 -m "..."`）的话，注释内容会直接变成 Release 说明。
+
 ---
 
 ## 截图说明
 
-文中的照片、视频均为演示素材：照片取自项目内置的五张 Unsplash 壁纸（Unsplash License），视频是这些图片生成的短暂推拉镜头，不含第三方影视内容与任何真人肖像。
+文中截图在真机（MiTV4-ANSM0 / Android 6.0.1）上抓取，壁纸用的是内置的「雅丹层岩」。图里出现的目录与文件是临时造的演示素材：`Sample Photos` 里是同一批自拍照片，`Sample Videos` 是这些照片生成的五秒推拉镜头。不含第三方影视内容、真人肖像或任何个人文件。
 
-v0.4.1 的安装包里还多了 7 张我自己拍的照片（CC0 1.0，无署名要求）。本文截图是在加入这批照片之前拍的，所以图里看到的是 Unsplash 那几张。
+截图里的入口名（`移动存储 1`、`内部存储`、`Movies`）是运行时探测存储卷后自动生成的，每个人的机器上不一样。
 
 ---
 

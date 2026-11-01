@@ -4,22 +4,21 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ResolveInfo;
 import org.json.JSONArray;
-import java.io.File;
 import java.util.*;
 
 /** Stable app/source identities; removing an entry never uninstalls an app. */
 final class HomeItems {
-    /** Disk folders first so a remote press lands inside the library, not in an app. */
-    static final String[] DEFAULTS = {"dir:/storage/9E2C13BF2C1390FF", "dir:/storage/50E231E9E231D446",
-            "com.xiaodianshi.tv.yst", "com.xiaomi.mitv.smartshare", "com.mitv.gallery", "com.mitv.tvhome"};
+    /** 确认存在的系统自带入口；装上才出现在首页，没装就跳过。 */
+    private static final String[] SHELL_PACKAGES = {
+            "com.mitv.tvhome", "com.mitv.gallery", "com.xiaomi.mitv.smartshare"};
     final Context context;
     final LinkedHashMap<String,String> names = new LinkedHashMap<>();
     final List<String> order = new ArrayList<>();
+    private final List<String> removable = new ArrayList<>();
     HomeItems(Context c) {
         context = c;
-        String[] labels = {"电影动画", "家庭照片", "哔哩哔哩", "小米投屏", "相册", "小米原桌面"};
-        for (int i=0;i<DEFAULTS.length;i++) names.put(DEFAULTS[i], labels[i]);
         discover();
+        removable.addAll(StorageVolumes.removable(c));
         try {
             JSONArray data = new JSONArray(c.getSharedPreferences("home-items",0).getString("order","[]"));
             for (int i=0;i<data.length() && order.size()<9;i++) {
@@ -27,8 +26,41 @@ final class HomeItems {
                 if (validId(id) && !order.contains(id)) order.add(id);
             }
         } catch (Exception ignored) { order.clear(); }
-        if (order.isEmpty()) order.addAll(Arrays.asList(DEFAULTS));
+        if (order.isEmpty()) order.addAll(defaults());
     }
+
+    /**
+     * 首次进入时的首页条目：外接盘优先，其次内部存储，最后才是系统应用。
+     * 全部来自运行时探测——写死卷 ID 或第三方包名，等于把开发者自己的设备
+     * 布置推给别人，别人装完首页全是点了没反应的入口。
+     */
+    private List<String> defaults() {
+        List<String> out = new ArrayList<>();
+        for (String root : removable) out.add("dir:" + root);
+        String primary = StorageVolumes.primary();
+        if (primary != null) out.add("dir:" + primary);
+        for (String pkg : SHELL_PACKAGES) if (installed(pkg)) out.add(pkg);
+        return out;
+    }
+
+    /** 当前挂载的可移动卷，供设置页列出候选目录。 */
+    List<String> removable() { return removable; }
+
+    /**
+     * 文件夹入口名。插着两个以上外接盘时带序号——否则首页上并排三个"移动存储"，
+     * 分不出哪个是哪个。
+     */
+    String folderLabel(String path) {
+        int index = removable.indexOf(path);
+        if (index < 0 || removable.size() < 2) return StorageVolumes.label(path);
+        return "移动存储 " + (index + 1);
+    }
+
+    private boolean installed(String pkg) {
+        try { context.getPackageManager().getPackageInfo(pkg, 0); return true; }
+        catch (android.content.pm.PackageManager.NameNotFoundException absent) { return false; }
+    }
+
     void discover() {
         for (String category : new String[]{Intent.CATEGORY_LEANBACK_LAUNCHER, Intent.CATEGORY_LAUNCHER}) {
             for (ResolveInfo r : context.getPackageManager().queryIntentActivities(new Intent(Intent.ACTION_MAIN).addCategory(category), 0)) {
@@ -39,14 +71,9 @@ final class HomeItems {
         }
     }
     String name(String id) {
-        if (id.startsWith("dir:")) {
-            String saved = context.getSharedPreferences("home-items",0).getString("name:"+id, null);
-            if (saved != null && !saved.trim().isEmpty()) return saved;
-            if (names.containsKey(id)) return names.get(id);
-            String path = id.substring(4);
-            String last = new File(path).getName();
-            return last.isEmpty() ? path : last;
-        }
+        // 文件夹入口的名字每次按当前挂载情况重新算，不落盘：
+        // 存下来的名字在换盘或增删卷之后就会与实际不符。
+        if (id.startsWith("dir:")) return folderLabel(id.substring(4));
         return names.getOrDefault(id, context.getSharedPreferences("home-items",0).getString("name:"+id,id));
     }
     static boolean validId(String id) {
@@ -58,7 +85,7 @@ final class HomeItems {
         for(String id : next) if(!validId(id)) return false;
         android.content.SharedPreferences.Editor e = context.getSharedPreferences("home-items",0).edit()
                 .putString("order",new JSONArray(next).toString());
-        for(String id:next) e.putString("name:"+id,name(id));
+        for(String id:next) if(!id.startsWith("dir:")) e.putString("name:"+id,name(id));
         if(!e.commit()) return false;
         order.clear(); order.addAll(next); return true;
     }

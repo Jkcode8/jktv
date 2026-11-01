@@ -11,6 +11,7 @@ import android.text.style.ForegroundColorSpan;
 import android.graphics.drawable.GradientDrawable;
 import android.view.*;
 import android.widget.*;
+import java.io.File;
 import java.util.*;
 
 /** Remote-first grouped settings. Focus browses; OK commits; Back returns one level. */
@@ -58,12 +59,12 @@ final class HomeSettings {
     private void back(){
         a.wallpapers.cancelPreview();a.wallpapers.cancelSelection();
         if(page.equals("overview")){close();return;}
-        go(page.equals("city")?"weather":page.equals("wallpaper")||page.equals("rotation")?"background":page.startsWith("item:")||page.equals("add")?"home":"overview");
+        go(page.equals("city")?"weather":page.equals("wallpaper")||page.equals("rotation")?"background":page.equals("adddir")?"add":page.startsWith("item:")||page.equals("add")?"home":"overview");
     }
     private void go(String next){cityRequest++;searching=false;a.wallpapers.cancelPreview();a.wallpapers.cancelSelection();page=next;render();}
     private String title(){
         switch(page){case "overview":return "设置";case "background":return "背景";case "wallpaper":return "壁纸";case "rotation":return "轮播";
-            case "weather":return "时间与天气";case "city":return "选择城市";case "layout":return "布局";case "type":return "字体";case "focus":return "选中样式";case "home":return "首页内容";case "add":return "首页内容 / 添加";case "tv":return "电视与启动";case "experiments":return "实验性功能";
+            case "weather":return "时间与天气";case "city":return "选择城市";case "layout":return "布局";case "type":return "字体";case "focus":return "选中样式";case "home":return "首页内容";case "add":return "首页内容 / 添加";case "adddir":return "首页内容 / 添加文件夹";case "tv":return "电视与启动";case "experiments":return "实验性功能";
             default:return "首页内容 / "+a.items.name(page.substring(5));}
     }
     private void render(){
@@ -125,8 +126,22 @@ final class HomeSettings {
                 for(int i=0;i<a.items.order.size();i++){String id=a.items.order.get(i);entry((i+1)+"  "+a.items.name(id),id.startsWith("hdmi:")?"HDMI "+id.substring(5):id.startsWith("dir:")?"文件夹 · "+id.substring(4):"应用",()->go("item:"+id));}
                 entry("添加入口","应用或 HDMI 信号源",()->go("add"));if(!undo.isEmpty())entry("撤销上一步","恢复本次编辑前的顺序",this::undo);break;
             case "add":
-                a.items.discover();for(String id:a.items.names.keySet())if(!a.items.order.contains(id))entry(a.items.name(id),"添加到首页末尾",()->{
-                    if(a.items.order.size()>=9){a.message("首页最多保留 9 个入口");return;}List<String> next=new ArrayList<>(a.items.order);next.add(id);if(save(next))go("home");});break;
+                entry("文件夹","从存储里选一个目录",()->go("adddir"));
+                a.items.discover();for(String id:a.items.names.keySet())if(!a.items.order.contains(id))entry(a.items.name(id),"添加到首页末尾",()->addEntry(id));break;
+            case "adddir": {
+                int found=0;
+                for(String root:a.items.removable())if(folder(root))found++;
+                String primary=StorageVolumes.primary();
+                if(primary!=null){
+                    for(String sub:new String[]{"Movies","Pictures","DCIM","Download"}){
+                        File dir=new File(primary,sub);if(dir.isDirectory()&&folder(dir.getAbsolutePath()))found++;
+                    }
+                    if(folder(primary))found++;
+                }
+                if(found==0)note("没有可添加的目录：它们已经都在首页上了，或者当前没有插着存储设备。");
+                else note("选中后加到首页末尾。换硬盘导致入口失效时，把它从首页隐藏，再回来重新选一次。");
+                break;
+            }
             case "weather":
                 option("关闭天气",!a.weather.enabled(),()->{if(a.weather.enabled(false)){a.refreshHome();render();}else failed();});
                 option("显示天气",a.weather.enabled(),()->{if(a.weather.enabled(true)){a.refreshHome();render();}else failed();});
@@ -269,6 +284,19 @@ final class HomeSettings {
     }
     private void scalePreview(int w,int h){if(preview!=null){float scale=Math.min(w/(float)a.dp(960),h/(float)a.dp(540));preview.setScaleX(scale);preview.setScaleY(scale);}}
     private boolean save(List<String> next){List<String> old=new ArrayList<>(a.items.order);if(!a.items.save(next)){failed();return false;}undo.push(old);a.refreshHome();return true;}
+
+    /** 加一个文件夹入口；已经加过的不再重复列出。 */
+    private boolean folder(String path){
+        String id="dir:"+path;
+        if(a.items.order.contains(id))return false;
+        entry(a.items.folderLabel(path),path,()->addEntry(id));
+        return true;
+    }
+
+    private void addEntry(String id){
+        if(a.items.order.size()>=9){a.message("首页最多保留 9 个入口");return;}
+        List<String> next=new ArrayList<>(a.items.order);next.add(id);if(save(next))go("home");
+    }
     private void move(String id,int direction){List<String> next=new ArrayList<>(a.items.order);int index=next.indexOf(id);Collections.swap(next,index,index+direction);if(save(next))render();}
     private void undo(){if(undo.isEmpty())return;if(a.items.save(undo.peek())){undo.pop();a.refreshHome();render();}else failed();}
     private void failed(){a.message("保存失败，保留原设置，请重试");}

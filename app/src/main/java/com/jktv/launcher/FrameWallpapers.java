@@ -30,6 +30,13 @@ import java.util.concurrent.Executors;
 
 /** Bundled wallpapers: bounded decoding, saved choice, foreground-only rotation. */
 final class FrameWallpapers {
+    /**
+     * Catalog entries above this count are rejected outright, and the launcher falls back to
+     * the gradient placeholders —— 整份索引视为无效，所以加图片前先确认条数。
+     * Changing this needs a matching review of {@code assets/wallpapers/catalog.json}.
+     */
+    static final int MAX_CATALOG_ENTRIES = 15;
+
     private static final class Entry {
         final String id, name, file, thumb;
         Entry(JSONObject json) throws org.json.JSONException {
@@ -59,7 +66,9 @@ final class FrameWallpapers {
             int n;
             while ((n = stream.read(buffer)) != -1) bytes.write(buffer, 0, n);
             JSONArray json = new JSONArray(bytes.toString("UTF-8"));
-            if (json.length() > 15) throw new IllegalArgumentException("At most 15 wallpapers");
+            if (json.length() > MAX_CATALOG_ENTRIES) throw new IllegalArgumentException(
+                    "Catalog lists " + json.length() + " wallpapers, at most "
+                            + MAX_CATALOG_ENTRIES + " allowed");
             for (int i = 0; i < json.length(); i++) entries.add(new Entry(json.getJSONObject(i)));
         } catch (Exception error) {
             android.util.Log.e("TvHome.Wallpaper", "Catalog unavailable", error);
