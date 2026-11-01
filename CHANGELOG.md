@@ -6,7 +6,7 @@
 
 ---
 
-## [未发布]
+## [v0.4.2] — 2026-11-01
 
 ### 新增
 
@@ -24,6 +24,7 @@
 - README 首屏加入 CI／版本／minSdk／许可徽章与「三十秒判断要不要往下看」
 - 新增「接下来想做什么」，写清语音入口、多卷、非小米适配的方向
 - 「已知限制」按实际行为重写，不再描述尚未提供的功能
+- README 首屏下载链接改为指向 `releases/latest` 并去掉写死的版本号，以后发版不必再改这一行
 
 ---
 
@@ -76,5 +77,6 @@
 
 属于上游 [guizang-tv](https://github.com/op7418/guizang-tv)，变更见上游仓库的提交历史。本仓库从上游 `312c011` 起算。
 
+[v0.4.2]: https://github.com/Jkcode8/jktv/releases/tag/v0.4.2
 [v0.4.1]: https://github.com/Jkcode8/jktv/releases/tag/v0.4.1
 [v0.4.0]: https://github.com/Jkcode8/jktv/releases/tag/v0.4.0

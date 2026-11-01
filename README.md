@@ -13,7 +13,7 @@
 
 ![首页](screenshots/01-home.jpg)
 
-**[下载 v0.4.1 APK](https://github.com/Jkcode8/jktv/releases/latest)**　·　包名 `com.jktv.launcher`　·　最低 Android 6.0（API 23）
+**[下载最新版 APK](https://github.com/Jkcode8/jktv/releases/latest)**　·　包名 `com.jktv.launcher`　·　最低 Android 6.0（API 23）
 
 > 仓库：<https://github.com/Jkcode8/jktv>　·　`git clone https://github.com/Jkcode8/jktv.git`
 
@@ -199,7 +199,7 @@ cd jktv
 
 ### 用 U 盘装（不需要开 ADB）
 
-从 [Releases](https://github.com/Jkcode8/jktv/releases) 下载 `JKTV-0.4.1.apk`，拷到 U 盘，插到电视上，用电视自带的「文件管理」或「媒体中心」找到这个文件，点开安装。第一次会提示「禁止安装未知来源的应用」，在弹窗里允许即可。
+从 [Releases](https://github.com/Jkcode8/jktv/releases) 下载 `JKTV-0.4.2.apk`，拷到 U 盘，插到电视上，用电视自带的「文件管理」或「媒体中心」找到这个文件，点开安装。第一次会提示「禁止安装未知来源的应用」，在弹窗里允许即可。
 
 ### 先在电视上打开 ADB 调试
 
@@ -227,7 +227,7 @@ cd jktv
 ```bash
 adb connect 192.168.10.14:5555   # 电视和电脑要在同一个局域网
 adb devices                       # 列表里出现 IP:5555 才算成功
-adb install -r JKTV-0.4.1.apk
+adb install -r JKTV-0.4.2.apk
 
 # 开机自启：把包名写入系统设置项
 adb shell settings put system start_3rd_app com.jktv.launcher

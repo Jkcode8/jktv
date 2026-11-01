@@ -7,8 +7,8 @@ android {
         applicationId 'com.jktv.launcher'
         minSdk 23
         targetSdk 34
-        versionCode 7
-        versionName '0.4.1'
+        versionCode 8
+        versionName '0.4.2'
     }
     signingConfigs {
         release {

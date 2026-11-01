@@ -31,7 +31,7 @@ body:
     id: version
     attributes:
       label: JK TV 版本
-      placeholder: v0.4.1（Releases 里下载的正式包 / 自己构建的 debug 包）
+      placeholder: 例如 v0.4.2（Releases 里下载的正式包 / 自己构建的 debug 包）
     validations:
       required: true
 

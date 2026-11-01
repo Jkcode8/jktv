@@ -11,7 +11,7 @@ A lightweight Android TV launcher for older televisions. It reads external stora
 
 ![Home](screenshots/01-home.jpg)
 
-**[Download v0.4.1 APK](https://github.com/Jkcode8/jktv/releases/latest)**　·　Package `com.jktv.launcher`　·　Android 6.0+ (API 23)
+**[Download the latest APK](https://github.com/Jkcode8/jktv/releases/latest)**　·　Package `com.jktv.launcher`　·　Android 6.0+ (API 23)
 
 *中文说明见 [README.md](README.md)*
 
@@ -73,7 +73,7 @@ Side-load it. Copy the APK to a USB stick and open it from the TV's file manager
 
 ```bash
 adb connect <tv-ip>:5555
-adb install -r JKTV-0.4.1.apk
+adb install -r JKTV-0.4.2.apk
 
 # Boot start (MIUI TV): write the package name into a system setting
 adb shell settings put system start_3rd_app com.jktv.launcher
