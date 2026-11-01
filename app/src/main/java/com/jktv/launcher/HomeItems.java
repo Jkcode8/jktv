@@ -71,23 +71,41 @@ final class HomeItems {
 
     private SharedPreferences prefs() { return context.getSharedPreferences(PREFS, 0); }
 
-    /** 用户给这个磁盘入口起的名字；没起过就是 null。 */
+    /** 用户给这个入口起的名字；没起过就是 null。磁盘、HDMI、应用都能改名。 */
     String alias(String id) {
-        if (!id.startsWith("dir:")) return null;
         String value = prefs().getString(ALIAS + id, "");
         return value == null || value.trim().isEmpty() ? null : value.trim();
     }
 
+    /** 没有任何自定义名时该显示什么。 */
+    String autoName(String id) {
+        if (id.startsWith("dir:")) return folderLabel(id.substring(4));
+        if (isHdmi(id)) return hdmiLabel(id.substring(5));
+        return names.getOrDefault(id, prefs().getString(LEGACY + id, id));
+    }
+
+    /** {@code hdmi:1} 这类信号源入口：名字固定，图标也固定，不跟名字变。 */
+    static boolean isHdmi(String id) { return id.startsWith("hdmi:"); }
+
+    static String hdmiLabel(String port) { return "HDMI " + port; }
+
+    static String hdmiLabel(int port) { return hdmiLabel(String.valueOf(port)); }
+
+    /** 能切换的 HDMI 端口；固件不支持时返回空表，设置页据此不列这一组。 */
+    static List<Integer> hdmiPorts(Context context) {
+        return XiaomiControls.hdmiAvailable(context) ? Arrays.asList(1, 2) : Collections.<Integer>emptyList();
+    }
+
     /**
-     * 重命名一个磁盘入口。传空串或传回自动名表示恢复默认——
-     * 存下来等于自动名没有意义，换盘之后它就错了。
+     * 改名。传空串、或传回自动名表示恢复默认——把自动名存下来没有意义，
+     * 换盘或换语言之后它就错了。
      */
     boolean rename(String id, String name) {
-        if (!id.startsWith("dir:")) return false;
+        if (!validId(id)) return false;
         String value = name == null ? "" : name.trim();
         if (value.length() > MAX_NAME) value = value.substring(0, MAX_NAME);
         SharedPreferences.Editor e = prefs().edit();
-        if (value.isEmpty() || value.equals(folderLabel(id.substring(4)))) e.remove(ALIAS + id);
+        if (value.isEmpty() || value.equals(autoName(id))) e.remove(ALIAS + id);
         else e.putString(ALIAS + id, value);
         return e.commit();
     }
@@ -144,10 +162,9 @@ final class HomeItems {
         }
     }
     String name(String id) {
-        // 磁盘入口：用户起的名字优先，没起过才按当前挂载情况现算。
-        // 自动名不落盘——存下来的名字在换盘或增删卷之后就会与实际不符。
-        if (id.startsWith("dir:")) return displayName(alias(id), folderLabel(id.substring(4)));
-        return names.getOrDefault(id, context.getSharedPreferences("home-items",0).getString("name:"+id,id));
+        // 自定义名优先；没起过名按当前情况现算。自动名不落盘——
+        // 存下来的名字在换盘、增删卷或换语言之后就会与实际不符。
+        return displayName(alias(id), autoName(id));
     }
     static boolean validId(String id) {
         return id.equals("hdmi:1") || id.equals("hdmi:2") || id.startsWith("dir:") && id.length() > 4
@@ -156,8 +173,9 @@ final class HomeItems {
     boolean save(List<String> next) {
         if (next.isEmpty() || next.size()>9 || new HashSet<>(next).size()!=next.size()) return false;
         for(String id : next) if(!validId(id)) return false;
+        // 名字只走 alias 一套键。旧版这里还会顺手把当前显示名写进 name:…，
+        // 那样「恢复自动名称」删掉 alias 之后又会读到这份快照，等于恢复不了。
         SharedPreferences.Editor e = prefs().edit().putString("order",new JSONArray(next).toString());
-        for(String id:next) if(!id.startsWith("dir:")) e.putString("name:"+id,name(id));
         if(!e.commit()) return false;
         order.clear(); order.addAll(next); return true;
     }

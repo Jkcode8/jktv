@@ -45,5 +45,23 @@ public class HomeItemsNameTest {
         assertEquals("dir:/storage/9E2C13BF2C1390FF", HomeSettings.entryOf("rename:dir:/storage/9E2C13BF2C1390FF"));
         assertEquals("dir:/storage/9E2C13BF2C1390FF", HomeSettings.entryOf("pick:dir:/storage/9E2C13BF2C1390FF"));
         assertEquals("com.mitv.gallery", HomeSettings.entryOf("rename:com.mitv.gallery"));
+        assertEquals("hdmi:1", HomeSettings.entryOf("rename:hdmi:1"));
+    }
+
+    @Test public void hdmiIdsAreRecognised() {
+        assertTrue(HomeItems.isHdmi("hdmi:1"));
+        assertTrue(HomeItems.isHdmi("hdmi:2"));
+        assertFalse(HomeItems.isHdmi("com.mitv.gallery"));
+        assertFalse(HomeItems.isHdmi("dir:/storage/emulated/0"));
+        assertEquals("HDMI 2", HomeItems.hdmiLabel(2));
+    }
+
+    @Test public void renamePresetsMatchTheEntryKind() {
+        // 磁盘那套名字对 HDMI 没有意义，反之亦然。
+        assertArrayEquals(new String[]{"电影动画", "家庭照片", "我的视频", "我的文件"},
+                HomeSettings.presets("dir:/storage/9E2C13BF2C1390FF"));
+        assertArrayEquals(new String[]{"机顶盒", "游戏机", "电脑", "蓝光机"},
+                HomeSettings.presets("hdmi:1"));
+        assertEquals(0, HomeSettings.presets("com.mitv.gallery").length);
     }
 }

@@ -151,11 +151,28 @@ final class HomeSettings {
             case "wallpaper":gallery();break;
             case "home":
                 note("保留 1–9 个入口。选择一项可调整位置或从首页隐藏。");
-                for(int i=0;i<a.items.order.size();i++){String id=a.items.order.get(i);entry((i+1)+"  "+a.items.name(id),id.startsWith("hdmi:")?"HDMI "+id.substring(5):id.startsWith("dir:")?"文件夹 · "+id.substring(4):"应用",()->go("item:"+id));}
-                entry("添加入口","应用或 HDMI 信号源",()->go("add"));if(!undo.isEmpty())entry("撤销上一步","恢复本次编辑前的顺序",this::undo);break;
-            case "add":
+                for(int i=0;i<a.items.order.size();i++){String id=a.items.order.get(i);entry((i+1)+"  "+a.items.name(id),HomeItems.isHdmi(id)?"信号源 · "+a.items.autoName(id):id.startsWith("dir:")?"文件夹 · "+id.substring(4):"应用",()->go("item:"+id));}
+                entry("添加入口",HomeItems.hdmiPorts(a).isEmpty()?"已装的应用":"应用或 HDMI 信号源",()->go("add"));if(!undo.isEmpty())entry("撤销上一步","恢复本次编辑前的顺序",this::undo);break;
+            case "add": {
                 entry("文件夹","从存储里选一个目录",()->go("adddir"));
-                a.items.discover();for(String id:a.items.names.keySet())if(!a.items.order.contains(id))entry(a.items.name(id),"添加到首页末尾",()->addEntry(id));break;
+                List<Integer> ports=HomeItems.hdmiPorts(a);
+                if(ports.isEmpty()){
+                    note("这台电视的固件不支持从桌面切 HDMI 信号源，所以不列端口。切信号源仍可用电视自带遥控器上的信号源键。");
+                }else{
+                    List<Integer> sparePorts=new ArrayList<>();
+                    for(int port:ports)if(!a.items.order.contains("hdmi:"+port))sparePorts.add(port);
+                    heading("HDMI 信号源");
+                    for(final int port:sparePorts)entry(HomeItems.hdmiLabel(port),"从桌面切到这个接口",()->addEntry("hdmi:"+port));
+                    if(sparePorts.isEmpty())note("两个 HDMI 接口都已经在首页上了。隐藏过的入口会重新出现在这里。");
+                }
+                a.items.discover();
+                List<String> spareApps=new ArrayList<>();
+                for(String id:a.items.names.keySet())if(!a.items.order.contains(id))spareApps.add(id);
+                heading("应用");
+                for(String id:spareApps)entry(a.items.name(id),"添加到首页末尾",()->addEntry(id));
+                if(spareApps.isEmpty())note("已装的其它应用都已经在首页上了。");
+                break;
+            }
             case "adddir": {
                 heading("浏览文件夹");
                 for(String root:a.items.removable())entry("浏览 "+a.items.folderLabel(root),"进入后可以一层层选子文件夹",()->go(browseName("add",root)));
@@ -211,12 +228,10 @@ final class HomeSettings {
                 if(page.startsWith("pick:")){pickPage(entryOf(page));break;}
                 if(page.startsWith("browse:")){browsePage(browseTarget(page),browsePath(page));break;}
                 String id=page.substring(5);int pos=a.items.order.indexOf(id);
-                if(id.startsWith("dir:")){
-                    String custom=a.items.alias(id);
-                    entry("重命名",custom!=null?custom+"　·　自定义":"按存储自动命名",()->go("rename:"+id));
-                    entry("更换目录",id.substring(4),()->go("pick:"+id));
-                    if(custom!=null)entry("恢复自动名称",a.items.folderLabel(id.substring(4)),()->applyName(id,""));
-                }
+                String custom=a.items.alias(id);
+                entry("重命名",custom!=null?custom+"　·　自定义":"自动名称："+a.items.autoName(id),()->go("rename:"+id));
+                if(id.startsWith("dir:"))entry("更换目录",id.substring(4),()->go("pick:"+id));
+                if(custom!=null)entry("恢复自动名称",a.items.autoName(id),()->applyName(id,""));
                 if(pos>0)entry("上移","与上一项交换位置",()->move(id,-1));if(pos>=0&&pos<a.items.order.size()-1)entry("下移","与下一项交换位置",()->move(id,1));
                 if(a.items.order.size()>1)entry("从首页隐藏","应用仍保留在电视上",()->{List<String> next=new ArrayList<>(a.items.order);next.remove(id);if(save(next))go("home");});
                 else note("至少保留一个首页入口。");break;
@@ -337,8 +352,8 @@ final class HomeSettings {
     }
 
     /**
-     * 重命名页：一个输入框加几个常用名。遥控器打中文很费劲，预设才是主要路径；
-     * 图标跟着名字走，所以这里改名等于同时换图标。
+     * 重命名页：一个输入框加几个常用名。遥控器打中文很费劲，预设才是主要路径。
+     * 磁盘入口的图标跟着名字走，其余入口只改文字。
      */
     private void renamePage(String id){
         nameInput=new EditText(a);nameInput.setText(a.items.name(id));
@@ -350,9 +365,21 @@ final class HomeSettings {
         nameInput.setOnFocusChangeListener((v,focus)->v.setBackground(WallpaperMaterial.rounded(focus?0x45FFFFFF:0x26FFFFFF,a.dp(10))));
         options.addView(nameInput,new LinearLayout.LayoutParams(-1,a.dp(44)));
         entry("保存这个名字","",()->applyName(id,nameInput==null?"":nameInput.getText().toString()));
-        heading("常用名字");
-        for(String preset:new String[]{"电影动画","家庭照片","我的视频","我的文件"})entry(preset,"",()->applyName(id,preset));
-        note("名字决定左侧图标：带「电影／视频／动画」是摄像机，带「照片／相册」是照片，其余是文件夹。");
+        String[] presets=presets(id);
+        if(presets.length>0){
+            heading("常用名字");
+            for(String preset:presets)entry(preset,"",()->applyName(id,preset));
+        }
+        if(id.startsWith("dir:"))note("名字决定左侧图标：带「电影／视频／动画」是摄像机，带「照片／相册」是照片，其余是文件夹。");
+        else if(HomeItems.isHdmi(id))note("HDMI 入口的图标固定，只改显示的名字。点开后会切到对应接口；接的是什么设备自己心里有数就行。");
+        else note("只改首页显示的名字，图标仍是这个应用自己的。");
+    }
+
+    /** 重命名页的常用名字，按入口类型给——磁盘那套名字对 HDMI 没有意义。 */
+    static String[] presets(String id){
+        if(id.startsWith("dir:"))return new String[]{"电影动画","家庭照片","我的视频","我的文件"};
+        if(HomeItems.isHdmi(id))return new String[]{"机顶盒","游戏机","电脑","蓝光机"};
+        return new String[0];
     }
 
     /** 换目录页：当前入口指向别处，位置和名字都保留。 */

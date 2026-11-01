@@ -44,22 +44,36 @@ final class XiaomiControls {
         return enabled() || "xiaomi".equalsIgnoreCase(Build.BRAND);
     }
 
-    /** Observed on this firmware: source 23 = HDMI 1, source 24 = HDMI 2. */
-    static boolean openHdmi(Context context, int port) {
-        if (!enabled(context) || port < 1 || port > 2) return false;
+    /**
+     * 这台机器能不能从桌面切信号源：得有小系统，且 {@code ExternalSourceActivity}
+     * 是启用状态、允许外部拉起、没有拦住我们的权限。设置页据此决定要不要列出
+     * HDMI 端口——列一条点了没反应的入口，比不列更糟。
+     */
+    static boolean hdmiAvailable(Context context) {
+        if (!enabled(context)) return false;
         ComponentName target = new ComponentName("com.xiaomi.mitv.tvplayer",
                 "com.xiaomi.mitv.tvplayer.ExternalSourceActivity");
         try {
             ActivityInfo info = context.getPackageManager().getActivityInfo(target, 0);
-            if (!info.enabled || !info.exported) return false;
-            if (info.permission != null
-                    && context.checkSelfPermission(info.permission) != PackageManager.PERMISSION_GRANTED)
-                return false;
+            return info.enabled && info.exported
+                    && (info.permission == null
+                    || context.checkSelfPermission(info.permission) == PackageManager.PERMISSION_GRANTED);
+        } catch (PackageManager.NameNotFoundException | RuntimeException unavailable) {
+            return false;
+        }
+    }
+
+    /** Observed on this firmware: source 23 = HDMI 1, source 24 = HDMI 2. */
+    static boolean openHdmi(Context context, int port) {
+        if (port < 1 || port > 2 || !hdmiAvailable(context)) return false;
+        ComponentName target = new ComponentName("com.xiaomi.mitv.tvplayer",
+                "com.xiaomi.mitv.tvplayer.ExternalSourceActivity");
+        try {
             context.startActivity(new Intent("com.xiaomi.mitv.tvplayer.EXTSRC_PLAY")
                     .setComponent(target).putExtra("input", 22 + port)
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
             return true;
-        } catch (PackageManager.NameNotFoundException | RuntimeException unavailable) {
+        } catch (RuntimeException unavailable) {
             android.util.Log.w("TvHome.Xiaomi", "HDMI entry unavailable", unavailable);
             return false;
         }
