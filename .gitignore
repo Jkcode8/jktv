@@ -23,7 +23,7 @@ app/src/main/assets/wallpapers/*
 !app/src/main/assets/wallpapers/UNSPLASH-NOTICE.txt
 # Only the explicitly selected, source-verified photos are public assets.
 !app/src/main/assets/wallpapers/bundled/
-# Author's own photographs: shot by the maintainer, published under CC BY 4.0.
+# Author's own photographs: shot by the maintainer, released under CC0 1.0.
 !app/src/main/assets/wallpapers/author/
 !app/src/main/assets/wallpapers/author/**
 

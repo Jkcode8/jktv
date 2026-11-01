@@ -19,7 +19,7 @@
 
 v0.1.1 起，内置五张经原页面核对的 Unsplash 照片，适用 **Unsplash License**，不适用代码的 MIT 许可。逐张署名、原始链接和处理方式见 [壁纸说明](docs/WALLPAPERS.md)，许可通知也随 APK 打包。
 
-v0.4.1 起，另外内置七张维护者本人拍摄的风景照，以 [**CC BY 4.0**](https://creativecommons.org/licenses/by/4.0/deed.zh) 授权免费使用（署名：Jkcode8），同样不适用代码的 MIT 许可。这批照片不含人物肖像与可识别的地点或个人标识，显示副本已剥离 EXIF。
+v0.4.1 起，另外内置七张维护者本人拍摄的风景照，以 [**CC0 1.0**](https://creativecommons.org/publicdomain/zero/1.0/deed.zh) 释出至公有领域：可自由使用、修改、商用与再分发，无需署名。这批照片不含人物肖像与可识别的地点或个人标识，显示副本已剥离 EXIF。
 
 用户自行加入的照片不因放入本工程而自动获得 MIT 许可。其他未授权公开的私人试用素材、实机诊断数据、签名密钥均不在公开源代码或官方 APK 中。
 

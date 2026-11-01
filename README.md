@@ -257,13 +257,13 @@ adb shell settings put system start_3rd_app com.jktv.launcher
 | 来源 | 数量 | 许可 | 说明 |
 | --- | --- | --- | --- |
 | 上游版本自带 | 5 张 | [Unsplash License](https://unsplash.com/license) | 由上游选定，逐张核对了原页面的作者与授权标记 |
-| 我自己拍的 | 7 张 | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/deed.zh) | 雅丹、草原、梯田、山水，v0.4.1 起加入 |
+| 我自己拍的 | 7 张 | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/deed.zh) | 雅丹、草原、梯田、山水，v0.4.1 起加入 |
 
-两批都**可以免费使用**——当壁纸、二次分发、商用都行，条件只有一个：保留署名。Unsplash 那批按 Unsplash License 走（未做显著修改的照片不得单独出售），我拍的这批按 CC BY 4.0 走（署上「摄影：Jkcode8」即可）。
+两批都**可以免费使用**——当壁纸、二次分发、商用都行。区别只在署名：Unsplash 那批按 Unsplash License 走（未做显著修改的照片不得单独出售，建议保留作者署名）；我拍的这批是 CC0，已释出到公有领域，**连署名都不要求**，拿走直接用。
 
-要再分发，署名写这一句就够：
+要再分发的话，这段写不写都行，写了更厚道：
 
-> 壁纸来自 JK TV（<https://github.com/Jkcode8/jktv>）：5 张适用 Unsplash License，7 张由 Jkcode8 以 CC BY 4.0 授权。
+> 壁纸来自 JK TV（<https://github.com/Jkcode8/jktv>）：5 张适用 Unsplash License，7 张由 Jkcode8 以 CC0 1.0 释出。
 
 七张自拍做过统一处理：16:9 裁到 1920 × 1080、亮度 −0.09 EV、降饱和，再按原图平均亮度叠一层自适应暗角，输出时剥离 EXIF——拍摄定位、机型、时间都不会跟着图片跑出去。这批照片里没有人物肖像。逐张清单、处理参数与重新生成的命令见 [`docs/WALLPAPERS.md`](docs/WALLPAPERS.md)。
 
@@ -296,7 +296,7 @@ export JKTV_KEY_PASSWORD=******
 
 文中的照片、视频均为演示素材：照片取自项目内置的五张 Unsplash 壁纸（Unsplash License），视频是这些图片生成的短暂推拉镜头，不含第三方影视内容与任何真人肖像。
 
-v0.4.1 的安装包里还多了 7 张我自己拍的照片（CC BY 4.0）。本文截图是在加入这批照片之前拍的，所以图里看到的是 Unsplash 那几张。
+v0.4.1 的安装包里还多了 7 张我自己拍的照片（CC0 1.0，无署名要求）。本文截图是在加入这批照片之前拍的，所以图里看到的是 Unsplash 那几张。
 
 ---
 

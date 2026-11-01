@@ -3,9 +3,9 @@
 内置 12 张壁纸，分两批，许可各自独立：
 
 - **5 张 Unsplash 照片**——2026-10-20 截图中选定的那五张，逐张原页面已核对作者与「Free to use under the Unsplash License」标记；没有包含其余 Wallhaven 图片。
-- **7 张维护者自拍**——v0.4.1 起加入，CC BY 4.0，详见文末。
+- **7 张维护者自拍**——v0.4.1 起加入，CC0 1.0，详见文末。
 
-两批都可以免费使用，但署名条件不同，再分发前请对号入座。
+两批都可以免费使用，区别在署名：Unsplash 那批按 Unsplash License，作者照片那批已释出到公有领域，连署名都不需要。
 
 图片遵循 [Unsplash License](https://unsplash.com/license)，不属于项目代码的 MIT 授权。可免费复制、修改及分发用于本桌面；不得将未作显著修改的照片单独出售，或汇编成与 Unsplash 相似或竞争的服务。
 
@@ -23,11 +23,11 @@
 
 作者与来源也记录在 APK 内的 `assets/wallpapers/catalog.json`；资源大小、尺寸及校验值见 [媒体索引](../app/src/main/assets/wallpapers/bundled/MEDIA-INDEX.md)。
 
-## 维护者拍摄的照片（CC BY 4.0）
+## 维护者拍摄的照片（CC0 1.0）
 
 从 v0.4.1 起，另外随包 7 张维护者本人拍摄的风景照，与上面 5 张 Unsplash 照片一起轮播，并排在壁纸列表最前面。这批照片没有人物肖像，也不含可识别的地点或个人标识。
 
-摄影：[Jkcode8](https://github.com/Jkcode8)，以 [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/deed.zh) 授权免费使用——可以复制、修改、商用、再分发，条件只有一个：保留署名。这一批**不适用** Unsplash License，也不因放入本仓库而转为 MIT。
+摄影：[Jkcode8](https://github.com/Jkcode8)，以 [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/deed.zh) 释出到公有领域——可以复制、修改、商用、再分发，**不需要署名**，也不需要标注来源。这一批**不适用** Unsplash License，同样不因放入本仓库而转为 MIT（CC0 已放弃权利，MIT 无从叠加）。
 
 | 预览 | 桌面名称 | 文件 |
 | --- | --- | --- |

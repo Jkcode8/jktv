@@ -1,9 +1,9 @@
 # 壁纸资源
 
-内置 12 张，每 5 分钟轮播：`author/` 下 7 张维护者自拍（CC BY 4.0），`bundled/` 下 5 张 Unsplash 照片（Unsplash License）。
-逐张署名与来源见根目录 [`docs/WALLPAPERS.md`](../../../../../docs/WALLPAPERS.md)，Unsplash 的许可通知见 `UNSPLASH-NOTICE.txt`。
+内置 12 张，每 5 分钟轮播：`author/` 下 7 张维护者自拍（CC0 1.0），`bundled/` 下 5 张 Unsplash 照片（Unsplash License）。
+来源与处理方式见根目录 [`docs/WALLPAPERS.md`](../../../../../docs/WALLPAPERS.md)，Unsplash 的许可通知见 `UNSPLASH-NOTICE.txt`。
 
-两批素材都可以免费使用，但署名条件不同，代码的 MIT 许可不覆盖这些图片。
+两批素材都可以免费使用：Unsplash 那批要求保留作者署名，作者照片那批是 CC0，署名也不要求。代码的 MIT 许可不覆盖这些图片。
 `catalog.json` 是唯一的索引文件，最多 15 条；目录为空或索引缺失时，应用回退到五种源码绘制的渐变背景。
 
 ## 换成自己的照片
