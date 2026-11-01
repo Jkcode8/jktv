@@ -1,5 +1,47 @@
 [
   {
+    "id": "author-01",
+    "name": "雅丹层岩",
+    "file": "author/author-01.jpg",
+    "thumb": "author/author-01_thumb.jpg"
+  },
+  {
+    "id": "author-02",
+    "name": "戈壁孤峰",
+    "file": "author/author-02.jpg",
+    "thumb": "author/author-02_thumb.jpg"
+  },
+  {
+    "id": "author-03",
+    "name": "夕照台地",
+    "file": "author/author-03.jpg",
+    "thumb": "author/author-03_thumb.jpg"
+  },
+  {
+    "id": "author-04",
+    "name": "岩壁天光",
+    "file": "author/author-04.jpg",
+    "thumb": "author/author-04_thumb.jpg"
+  },
+  {
+    "id": "author-05",
+    "name": "草原与雪岭",
+    "file": "author/author-05.jpg",
+    "thumb": "author/author-05_thumb.jpg"
+  },
+  {
+    "id": "author-06",
+    "name": "梯田村落",
+    "file": "author/author-06.jpg",
+    "thumb": "author/author-06_thumb.jpg"
+  },
+  {
+    "id": "author-07",
+    "name": "山水之间",
+    "file": "author/author-07.jpg",
+    "thumb": "author/author-07_thumb.jpg"
+  },
+  {
     "id": "unsplash-rSYsP5TlEAk",
     "name": "雾中雪岭",
     "file": "bundled/rSYsP5TlEAk.jpg",

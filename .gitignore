@@ -21,8 +21,11 @@ app/src/main/assets/wallpapers/*
 !app/src/main/assets/wallpapers/catalog.json
 !app/src/main/assets/wallpapers/README.md
 !app/src/main/assets/wallpapers/UNSPLASH-NOTICE.txt
-# Only the five explicitly selected, source-verified photos are public assets.
+# Only the explicitly selected, source-verified photos are public assets.
 !app/src/main/assets/wallpapers/bundled/
+# Author's own photographs: shot by the maintainer, published under CC BY 4.0.
+!app/src/main/assets/wallpapers/author/
+!app/src/main/assets/wallpapers/author/**
 
 # Companion pairing material must stay outside source control.
 tv-pairing.txt
