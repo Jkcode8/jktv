@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 装机与适配求助
+    url: https://github.com/Jkcode8/jktv/blob/main/docs/AI-SETUP.md
+    about: 连不上电视、装不上、不知道怎么开 ADB，先看这份引导
+  - name: 想改但不会写代码
+    url: https://github.com/Jkcode8/jktv#不想装开发环境三条不用敲命令的路
+    about: 把仓库丢给 AI、用 Actions 云端编译、只换壁纸，三条都不需要装开发环境

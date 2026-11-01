@@ -1,0 +1,69 @@
+name: 报告问题
+description: 装不上、闪退、某个入口点了没反应
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        先看一眼 [已知限制](https://github.com/Jkcode8/jktv#已知限制)。「重启后 ADB 复位」「视频播放画面截不出图」「只适配单卷路径」这类是系统行为，不是 bug。
+
+        请不要贴签名库、口令、配对码、完整 `local.properties`，也不要贴含个人照片的截图。
+
+  - type: input
+    id: device
+    attributes:
+      label: 电视型号
+      description: "`adb shell getprop ro.product.model` 的输出"
+      placeholder: MiTV4-ANSM0
+    validations:
+      required: true
+
+  - type: input
+    id: android
+    attributes:
+      label: 系统版本
+      description: "`adb shell getprop ro.build.version.release` 的输出"
+      placeholder: "6.0.1"
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: JK TV 版本
+      placeholder: v0.4.1（Releases 里下载的正式包 / 自己构建的 debug 包）
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤
+      description: 从装好开始，按遥控器怎么按的，越具体越好
+      placeholder: |
+        1. 装好后首页按首页键回到 JK TV
+        2. 焦点移到「家庭照片」
+        3. 按确认键
+        4. 卡在加载中，10 秒后回到首页
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期望行为
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: 日志
+      description: "`adb logcat -s TvHome:* AndroidRuntime:E` 里相关的那段，不要贴整份"
+      render: shell
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: 截图或录屏
+      description: 画面问题给截图，按键没反应给录屏。注意别带进个人照片

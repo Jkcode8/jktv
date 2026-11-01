@@ -1,0 +1,48 @@
+name: 想要的功能
+description: 缺什么能力、哪里用着别扭
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        先看 [接下来想做什么](https://github.com/Jkcode8/jktv#接下来想做什么)，多存储卷、非小米适配、语音入口、多语言都已在路上。
+
+        这个项目有几条硬约束，提需求时请一并考虑：最低 Android 6.0、遥控器优先、不引入第三方重型依赖、不接入内容源。
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: 涉及哪一块
+      options:
+        - 首页与入口
+        - 文件浏览与封面
+        - 照片 / 视频 / 音频播放
+        - 天气与时间
+        - 壁纸与外观
+        - 设置
+        - 安装、启动与兼容
+        - 其他
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: 现在哪里用着不顺手
+      description: 描述场景，不用先想解法
+      placeholder: 硬盘换了之后两个直达入口都指向旧的存储卷，得进设置重新选两次
+    validations:
+      required: true
+
+  - type: textarea
+    id: idea
+    attributes:
+      label: 你希望它怎么工作
+    validations:
+      required: true
+
+  - type: input
+    id: device
+    attributes:
+      label: 你的电视型号与系统版本
+      placeholder: MiTV4-ANSM0 / Android 6.0.1
