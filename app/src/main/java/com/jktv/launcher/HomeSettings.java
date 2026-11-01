@@ -282,6 +282,8 @@ final class HomeSettings {
     private void note(String s){TextView v=label(s,13);v.setTextColor(0xA6FFFFFF);v.setLineSpacing(a.dp(3),1);v.setPadding(a.dp(12),a.dp(14),a.dp(8),a.dp(12));options.addView(v);}
     private void entry(String name,String subtitle,Runnable run){
         TextView v=button(name+(subtitle.isEmpty()?"":"\n"+subtitle),run);
+        // 固定行高，副标题太长就不能让它再换行——多出来的字会盖住下面的条目。
+        v.setMaxLines(2);v.setEllipsize(android.text.TextUtils.TruncateAt.END);
         if(!subtitle.isEmpty()){
             SpannableString text=new SpannableString(v.getText());
             text.setSpan(new AbsoluteSizeSpan(13,true),name.length()+1,text.length(),Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
@@ -384,15 +386,15 @@ final class HomeSettings {
         int shown=Math.min(folders.size(),MAX_BROWSE);
         for(int i=0;i<shown;i++){
             File child=folders.get(i);
-            boolean onHome=a.items.order.contains("dir:"+child.getAbsolutePath());
-            entry(child.getName(),onHome?"已在首页":"",()->go(browseName(target,child.getAbsolutePath())));
+            browseEntry(child.getName(),()->go(browseName(target,child.getAbsolutePath())));
         }
         if(folders.size()>shown)note("这里还有 "+(folders.size()-shown)+" 个文件夹没列出来，按名字排序靠前的已经显示。");
         if(!StorageVolumes.isVolumeRoot(path)){
             String up=new File(path).getParentFile()==null?null:new File(path).getParentFile().getAbsolutePath();
-            if(up!=null)entry("上一级",up,()->go(browseName(target,up)));
+            if(up!=null)entry("上一级",browseLocation(up),()->go(browseName(target,up)));
         }
-        entry("选这个文件夹",a.items.order.contains("dir:"+path)?"已在首页":path,()->chooseDir(target,path));
+        // 副标题写"当前这一层"而不是完整路径：位置已经在上面的标题里，路径太长会顶破一行。
+        entry("选这个文件夹",a.items.order.contains("dir:"+path)?"已在首页":"当前这一层",()->chooseDir(target,path));
         if(folders.isEmpty())note("这里没有子文件夹，可以直接选这一层。");
     }
 
@@ -417,6 +419,17 @@ final class HomeSettings {
         }
         Collections.sort(folders,BY_NAME);
         return folders;
+    }
+
+    /** 浏览器里的子目录项：名字可能很长（剧集文件名），给两行，再多就省略。 */
+    private void browseEntry(String name,Runnable run){
+        TextView v=button(name,run);
+        v.setMaxLines(2);v.setEllipsize(android.text.TextUtils.TruncateAt.END);v.setLineSpacing(a.dp(2),1);
+        v.setTag(Boolean.TRUE);
+        Drawable arrow=a.getDrawable(R.drawable.mark_caret_right).mutate();arrow.setTint(0xAAFFFFFF);
+        arrow.setBounds(0,0,a.dp(14),a.dp(14));v.setCompoundDrawables(null,null,arrow,null);
+        LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,a.dp(56));lp.bottomMargin=a.dp(4);
+        options.addView(v,lp);decorate(v,false);
     }
 
     private void chooseDir(String target,String path){
