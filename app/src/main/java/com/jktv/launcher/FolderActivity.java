@@ -6,8 +6,10 @@ import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
+import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.text.TextUtils;
 import android.view.Gravity;
 import android.view.View;
@@ -71,6 +73,19 @@ public final class FolderActivity extends Activity {
     private int tileWidth;
     private int tileHeight;
     private final List<Tile> tiles = new ArrayList<>();
+
+    // The set's own player is the only decoder that works on this firmware, and
+    // it takes one file per launch. The folder queue therefore lives here: when
+    // the player returns we start the next clip ourselves, which is what keeps
+    // playback inside the folder instead of following the media browser.
+    private final List<File> reel = new ArrayList<>();
+    private int reelIndex = -1;
+    private long reelStartedAt;
+    private int reelLength;
+    private boolean reelRunning;
+
+    /** Request code for handing one clip to the set's player, so the close is reported back. */
+    private static final int REQ_PLAY = 0x50A1;
 
     /** One grid cell, kept so covers can be fetched only once it scrolls into view. */
     private static final class Tile {
@@ -589,6 +604,12 @@ public final class FolderActivity extends Activity {
                 android.util.Log.w("TvHome.Folder", "audio player failed", unavailable);
             }
         }
+        // Video goes out one file at a time to the set's player, from a queue we
+        // keep, so the folder order survives to the next clip.
+        if (type.startsWith("video")) {
+            startReel(file);
+            return;
+        }
         // The set's own player only starts on its private action with a playInfo
         // payload; a plain ACTION_VIEW makes it fail with error 1001.
         if (playWithSystemPlayer(file)) return;
@@ -618,16 +639,131 @@ public final class FolderActivity extends Activity {
             info.put("url", file.getAbsolutePath());
             info.put("index", 0);
             info.put("rootPath", file.getParent());
+            // "scheme" tells the player this is a one-off: without a sender it
+            // treats the clip as media-browser playback and continues with the
+            // browser's last-played record, i.e. a file from another folder.
+            info.put("sendby", "scheme");
             Intent play = new Intent("tv.intent.action.external.PLAY_URL");
             play.setComponent(new android.content.ComponentName("com.mitv.videoplayer",
                     "com.mitv.videoplayer.VideoPlayerActivity"));
             play.putExtra("playInfo", info.toString());
-            startActivity(play);
+            // For-result, the way the stock file browser launches it: the player
+            // returns no data, but the callback still fires the moment it closes,
+            // which is the earliest and steadiest notice we can get.
+            startActivityForResult(play, REQ_PLAY);
             return true;
         } catch (RuntimeException | org.json.JSONException unavailable) {
             android.util.Log.w("TvHome.Folder", "system player unavailable", unavailable);
             return false;
         }
+    }
+
+    /**
+     * Collects the folder's videos once, so the queue starts from the grid order
+     * the viewer just saw rather than from whatever the player would guess.
+     */
+    private void startReel(File video) {
+        reel.clear();
+        File parent = video.getParentFile();
+        File[] siblings = parent == null ? null : parent.listFiles();
+        if (siblings != null) {
+            for (File f : siblings) {
+                String name = f.getName();
+                if (!f.isFile() || name.startsWith(".") || f.length() == 0) continue;
+                if (mime(f).startsWith("video")) reel.add(f);
+            }
+        }
+        if (reel.isEmpty()) reel.add(video);
+        final Collator collator = Collator.getInstance(Locale.CHINA);
+        Collections.sort(reel, (a, b) -> collator.compare(a.getName(), b.getName()));
+        int at = 0;
+        for (int i = 0; i < reel.size(); i++) {
+            if (reel.get(i).getAbsolutePath().equals(video.getAbsolutePath())) { at = i; break; }
+        }
+        playReel(at);
+    }
+
+    private void playReel(int at) {
+        if (at < 0 || at >= reel.size()) { reelRunning = false; return; }
+        File file = reel.get(at);
+        reelIndex = at;
+        reelLength = durationOf(file);
+        reelStartedAt = SystemClock.elapsedRealtime();
+        reelRunning = playWithSystemPlayer(file);
+        android.util.Log.d("TvHome.Reel", "open " + (at + 1) + "/" + reel.size()
+                + " " + file.getName() + " len=" + reelLength + " ok=" + reelRunning);
+        if (!reelRunning) {
+            Toast.makeText(this, "这个视频打不开", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private static int durationOf(File file) {
+        MediaMetadataRetriever meta = new MediaMetadataRetriever();
+        try {
+            meta.setDataSource(file.getAbsolutePath());
+            String value = meta.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
+            if (value != null) return Integer.parseInt(value);
+        } catch (Exception unknown) {
+            android.util.Log.w("TvHome.Reel", "no duration for " + file.getName(), unknown);
+        } finally {
+            try { meta.release(); } catch (Exception ignored) { }
+        }
+        android.media.MediaExtractor extractor = new android.media.MediaExtractor();
+        try {
+            extractor.setDataSource(file.getAbsolutePath());
+            for (int i = 0; i < extractor.getTrackCount(); i++) {
+                long length = extractor.getTrackFormat(i).getLong(android.media.MediaFormat.KEY_DURATION);
+                if (length > 0) return (int) (length / 1000L);
+            }
+        } catch (Exception unknown) {
+            android.util.Log.w("TvHome.Reel", "no duration (extractor) for " + file.getName(), unknown);
+        } finally {
+            extractor.release();
+        }
+        return 0;
+    }
+
+    /**
+     * A visit that lasted long enough counts as "watched", and the queue moves on.
+     *
+     * There is nothing better to read. The player returns no result code, sends
+     * no broadcast, and its PlayStatusProvider holds only a path plus a status
+     * that stays at 2 for the whole session, so the elapsed time is the one
+     * signal on offer. The bar is a tenth of the clip, capped at two minutes and
+     * floored at five and a half seconds: this firmware's player stops clips
+     * early (a 63 s file closed at 45 s), and skipping ahead burns wall-clock
+     * time that a percentage would otherwise expect — either one used to drop
+     * the queue exactly when it should have carried on.
+     */
+    @Override protected void onResume() {
+        super.onResume();
+        // onActivityResult normally lands first and clears the flag; this is the
+        // fallback for a close that never produced a callback.
+        if (reelRunning) onPlayerClosed();
+    }
+
+    @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQ_PLAY && reelRunning) onPlayerClosed();
+    }
+
+    private void onPlayerClosed() {
+        reelRunning = false;
+        long spent = SystemClock.elapsedRealtime() - reelStartedAt;
+        long enough;
+        if (reelLength <= 0) enough = 5500L;
+        else enough = Math.max(5500L, Math.min(reelLength / 10L, 120000L));
+        android.util.Log.d("TvHome.Reel", "closed after " + spent + "ms of " + reelLength
+                + "ms (need " + enough + ")");
+        if (spent < enough) return;
+        final int next = reelIndex + 1;
+        if (next >= reel.size()) {
+            Toast.makeText(this, "已经是这个文件夹的最后一个视频", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        // A short beat, so the hand-off does not collide with the window
+        // animation that is still playing out.
+        list.postDelayed(() -> playReel(next), 300);
     }
 
     private static int iconFor(File file) {
